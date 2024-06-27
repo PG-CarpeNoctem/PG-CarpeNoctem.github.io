@@ -72,8 +72,8 @@ function dataReload() {
     "<div class='icon-label2'><i class='fa-solid fa-stopwatch icon' style='color:#8DB000'></i>",
     "<div class='icon-label2'><i class='fa-solid fa-sun icon' style='color:#FDDA0D'></i>",
   ];
-  baseImagePath =
-    "file:///Users/pushkalgupta/Desktop/JavaScript/Project/chess.html.js/images/";
+  baseImagePath = "images/";
+  //"file:///Users/myair/Desktop/JavaScript/Project/chess.html.js/images/";
   pieceImagePaths = [
     "piecesClassic/",
     "pieces/",
@@ -103,26 +103,50 @@ function dataReload() {
   });
   timeLabelArr = ["Bullet", "Blitz", "Rapid", "Daily"];
   displayStr = "";
-  leftBarArr1 = [
-    "Default",
-    "Change Board Color",
-    "Change Highlighted Color",
-    "Change Check Color",
-    "Change Previous Moves Color",
-    "Change Piece Type",
-    "Show Column & Row",
-    "Themes",
-    "No More Changes",
+  // leftBarArr1 = [
+  //   "Default",
+  //   "Change Board Color",
+  //   "Change Highlighted Color",
+  //   "Change Check Color",
+  //   "Change Previous Moves Color",
+  //   "Change Piece Type",
+  //   "Label Column & Row",
+  //   "Themes",
+  //   "No More Changes",
+  // ];
+  // leftBarArr2 = [
+  //   "Default",
+  //   "Highlight Previous Moves",
+  //   "Highlight Selected Piece",
+  //   "Show Legal Moves",
+  //   "Change Valid Moves Dot",
+  //   "No More Changes",
+  // ];
+  // leftBarArr3 = ["Show PGN", "Import PGN", "No More Changes"];
+  leftBarArr = [
+    [
+      { txt: "Default", icon: "fa-user" },
+      { txt: "Change Board Color", icon: "fa-palette" },
+      { txt: "Change Highlighted Color", icon: "fa-highlighter" },
+      { txt: "Change Check Color", icon: "fa-circle-plus" },
+      { txt: "Change Previous Moves Color", icon: "fa-circle-chevron-left" },
+      { txt: "Change Piece Type", icon: "fa-chess-pawn" },
+      { txt: "Show Column & Row", icon: "fa-eye" },
+      { txt: "Themes", icon: "fa-chess" },
+    ],
+    [
+      { txt: "Default", icon: "fa-user" },
+      { txt: "Highlight Previous Moves", icon: " fa-hand-point-left" },
+      { txt: "Highlight Selected Piece", icon: "fa-hand-pointer" },
+      { txt: "Show Legal Moves", icon: "fa-gavel" },
+      { txt: "Change Valid Moves Dot", icon: "fa-circle-dot" },
+    ],
+    [
+      { txt: "Show PGN", icon: "fa-note-sticky" },
+      { txt: "Import PGN", icon: "fa-file-import" },
+    ],
   ];
-  leftBarArr2 = [
-    "Default",
-    "Highlight Previous Moves",
-    "Highlight Selected Piece",
-    "Show Legal Moves",
-    "Change Valid Moves Dot",
-    "No More Changes",
-  ];
-  leftBarArr3 = ["Show PGN", "Import PGN", "No More Changes"];
+  leftBarOpenStatus = [false, false, false];
 }
 
 //Routine Function Calls
@@ -358,68 +382,181 @@ function confirmedTime() {
     switchNavTab_LoadGame();
   }
 }
-function makeLeftBar() {
-  let arr1 = leftBarArr1.map(function (ele) {
-    return "<option>" + ele + "</option>";
-  });
-  let arr2 = leftBarArr2.map(function (ele) {
-    return "<option>" + ele + "</option>";
-  });
-  let arr3 = leftBarArr3.map(function (ele) {
-    return "<option>" + ele + "</option>";
-  });
-  let leftStr =
-    "<div class = 'containerLeft'><div class='btn-group-vertical w-100' role='group'><div class='btn-group' role='group'><button class = 'p-3 btn btn-light btn-block-red w-100 h-100' onclick = 'undoMove()'><i class='fa-solid fa-left-long'></i> Undo Move</button><button class = 'p-3 btn btn-light btn-green w-100 h-100' onclick = 'redoMove()'><i class='fa-solid fa-right-long'></i> Redo Move</button></div><select class='p-3 btn btn-light left-bar-block w-100 h-100' id = 'dd1' onChange=dd1Actions()><option selected disabled>" +
-    // "&#xf43c; " +
-    leftBarArrAll[0] +
-    "</option>" +
-    arr1.join("") +
-    "</select><div id = 'dd1menu' class = 'w-100'></div><div class = 'height-break'></div><select class='p-3 btn  btn-light left-bar-block w-100 h-100' id= 'dd2' onChange=dd2Actions()><option selected disabled>" +
-    // "&#xf047; " +
-    leftBarArrAll[1] +
-    "</option>" +
-    arr2.join("") +
-    "</select><div id = 'dd2menu' class = 'w-100'></div><div class = 'height-break'></div><select class='p-3 btn btn-light left-bar-block w-100 h-100' id= 'dd3' onChange=dd3Actions()><option selected disabled>" +
-    // "&#xf02d; " +
-    leftBarArrAll[2] +
-    "</option>" +
-    arr3.join("") +
-    "</select><div id = 'dd3menu' class = 'w-100'></div><div class = 'height-break'></div><div id = 'missingPiece' class ='missing-piece'></div></div>";
+// function makeLeftBar() {
+//   let arr1 = leftBarArr1.map(function (ele) {
+//     return "<option>" + ele + "</option>";
+//   });
+//   let arr2 = leftBarArr2.map(function (ele) {
+//     return "<option>" + ele + "</option>";
+//   });
+//   let arr3 = leftBarArr3.map(function (ele) {
+//     return "<option>" + ele + "</option>";
+//   });
+//   leftStr =
+//     "<div class = 'containerLeft'><div class='btn-group-vertical w-100' role='group'><div class='btn-group' role='group'><button class = 'p-3 btn btn-light btn-block-red w-100 h-100' onclick = 'undoMove()'><i class='fa-solid fa-left-long'></i> Undo Move</button><button class = 'p-3 btn btn-light btn-green w-100 h-100' onclick = 'redoMove()'><i class='fa-solid fa-right-long'></i> Redo Move</button></div><select class='p-3 btn btn-light left-bar-block w-100 h-100' id = 'dd1' onChange=dd1Actions()><option selected disabled>" +
+//     // "&#xf43c; " +
+//     leftBarArrAll[0] +
+//     "</option>" +
+//     arr1.join("") +
+//     "</select><div id = 'dd1menu' class = 'w-100'></div><div class = 'height-break'></div><select class='p-3 btn  btn-light left-bar-block w-100 h-100' id= 'dd2' onChange=dd2Actions()><option selected disabled>" +
+//     // "&#xf047; " +
+//     leftBarArrAll[1] +
+//     "</option>" +
+//     arr2.join("") +
+//     "</select><div id = 'dd2menu' class = 'w-100'></div><div class = 'height-break'></div><select class='p-3 btn btn-light left-bar-block w-100 h-100' id= 'dd3' onChange=dd3Actions()><option selected disabled>" +
+//     // "&#xf02d; " +
+//     leftBarArrAll[2] +
+//     "</option>" +
+//     arr3.join("") +
+//     "</select><div id = 'dd3menu' class = 'w-100'></div><div class = 'height-break'></div><div id = 'missingPiece' class ='missing-piece'></div></div>";
+//   document.getElementById("leftbar").innerHTML = leftStr;
+// }
+function makeLeftBar(actionsData) {
+  let missingPieceElement = document.getElementById("missingPiece");
+  missingPieceStr = missingPieceElement ? missingPieceElement.innerHTML : "";
+  leftStr =
+    "<div class = 'containerLeft'><div class='btn-group-vertical w-100' role='group'>" +
+    "<div class='btn-group' role='group'>" +
+    "<button class = 'p-3 btn btn-light btn-block-red w-100 h-100' onclick = 'undoMove()'><i class='fa-solid fa-left-long'></i> Undo Move</button>" +
+    "<button class = 'p-3 btn btn-light btn-green w-100 h-100' onclick = 'redoMove()'><i class='fa-solid fa-right-long'></i> Redo Move</button></div>" +
+    "<div class = 'height-break'></div>";
+  leftStr += leftBarArrAll
+    .map(function (ele, index) {
+      return makeLeftDD(ele, index, leftBarOpenStatus[index]);
+    })
+    .join("");
+  leftStr +=
+    "<div id = 'missingPiece' class ='missing-piece'>" +
+    missingPieceStr +
+    "</div></div>";
   document.getElementById("leftbar").innerHTML = leftStr;
 }
+function makeLeftDD(ele, index1, isOpen) {
+  let str =
+    "<button class='p-3 btn btn-light btn-block h-100' onclick='showOptionsLeftDD(" +
+    index1 +
+    ",-1)' >" +
+    "<i class='fas  " +
+    ele.icon +
+    "'></i>" +
+    "&nbsp;&nbsp;" +
+    ele.txt +
+    "<i class='align-right-fa-icon fas " +
+    (isOpen ? "fa-caret-up" : "fa-caret-down") +
+    "'></i></button>" +
+    "<div class='w-100' role='group' id='dd" +
+    (index1 + 1) +
+    "menu'>" +
+    (isOpen ? makeLeftBarDDMenu(index1) : "") +
+    "</div><div class = 'height-break'></div>";
+  return str;
+}
+function makeLeftBarDDMenu(index1) {
+  return leftBarArr[index1]
+    .map(function (ele, index2) {
+      return (
+        "<button class='btn dd-menu-block btn-bd-secondary w-100 h-100' style='padding-left:36px' type='button' onclick='showOptionsLeftDD(" +
+        index1 +
+        "," +
+        index2 +
+        ")' >" +
+        "<i class='fas  " +
+        ele.icon +
+        "'></i>" +
+        "&nbsp;&nbsp;" +
+        ele.txt +
+        "</button>"
+      );
+    })
+    .join("");
+}
 function makeRightBar() {
+  let tableStr = "";
   let tableArr = rightPgnArr.map(function (ele, index) {
     if (index % 2 == 0)
       return (
         "<tr><th class ='right-bar-th'>" +
         (Math.abs(index / 2) + 1) +
-        "</th><td class = 'right-bar-td right-bar-td-even'>" +
+        "</th><td class = 'right-bar-td right-bar-td-even' onclick='changeColorRightBarTd(this)'>" +
         ele +
         "</td>"
       );
     else
       return (
-        "<td class = 'right-bar-td right-bar-td-odd'>" + ele + "</td></tr>"
+        "<td class = 'right-bar-td right-bar-td-odd' onclick='changeColorRightBarTd(this)'>" +
+        ele +
+        "</td></tr>"
       );
   });
   let headStr = "";
-  if (rightPgnArr.length != 0)
-    headStr =
-      "<thead>" +
-      "<div class='btn-group rounded-1' role='group'><button class = 'p-3 btn btn-light btn-right-block w-100 h-100' onclick = 'copyPGN()'><i class='fa-solid fa-copy'></i></button><button class = 'p-3 btn btn-light btn-right-block w-100 h-100' onclick = 'backwardFastPGN()'><i class='fa-solid fa-backward-fast'></i></button><button class = 'p-3 btn btn-light btn-right-block w-100 h-100' onclick = 'backwardStepPGN()'><i class='fa-solid fa-backward-step'></i></button><button class = 'p-3 btn btn-light btn-right-block w-100 h-100' onclick = 'forwardStepPGN()'><i class='fa-solid fa-forward-step'></i></button><button class = 'p-3 btn btn-light btn-right-block w-100 h-100' onclick = 'forwardFastPGN()'><i class='fa-solid fa-forward-fast'></i></button><button class = 'p-3 btn btn-light btn-right-block w-100 h-100' onclick = 'flipBoard()'><i class='fa-solid fa-rotate'></i></button>" +
-      "</thead>";
-  let tableStr =
-    "<table class = 'table-dark table-block'>" +
-    headStr +
-    tableArr.join("") +
-    "</table>";
+  headStr =
+    "<thead>" +
+    "<div class='btn-group rounded-1' role='group'><button class = 'p-3 btn btn-light btn-right-block w-100 h-100' onclick = 'copyPGN()'><i class='fa-solid fa-copy'></i></button><button class = 'p-3 btn btn-light btn-right-block w-100 h-100' onclick = 'backwardFastPGN()'><i class='fa-solid fa-backward-fast'></i></button><button class = 'p-3 btn btn-light btn-right-block w-100 h-100' onclick = 'backwardStepPGN()'><i class='fa-solid fa-backward-step'></i></button><button class = 'p-3 btn btn-light btn-right-block w-100 h-100' onclick = 'forwardStepPGN()'><i class='fa-solid fa-forward-step'></i></button><button class = 'p-3 btn btn-light btn-right-block w-100 h-100' onclick = 'forwardFastPGN()'><i class='fa-solid fa-forward-fast'></i></button><button class = 'p-3 btn btn-light btn-right-block w-100 h-100' onclick = 'flipBoard()'><i class='fa-solid fa-rotate'></i></button></div>" +
+    "</thead>";
+  if (rightPgnArr.length != 0 && rightPgnArr.length != 1) {
+    tableStr =
+      headStr +
+      "<div class = 'table-container'><table class = 'table-dark table-block'>" +
+      tableArr.join("") +
+      "</table></div>";
+  }
   console.log(tableStr);
   let rightStr =
-    "<div class = 'containerRight'><div class='btn-group-vertical w-100' role='group'><div class='btn-group' role='group'><input type='text' class='btn-name-right' id='opponentName' value='Opponent' placeholder='Opponent'><button class = 'p-3 btn btn-light btn-right w-100 h-100'>Timer</button></div><span class = 'color-line-top'></span><div id = 'missingPieceWhite' class='missing-piece'></div>" +
+    "<div class = 'containerRight'><div id = 'missingPieceWhite' class='missing-piece-top'></div><div class='btn-group-vertical w-100' role='group'><div class='btn-group' role='group'><input type='text' class='btn-name-right' id='opponentName' value='Opponent' placeholder='Opponent'><button class = 'p-3 btn btn-light btn-right w-100 h-100'>Timer</button></div><span class = 'color-line-top'></span>" +
     tableStr +
-    "<span class = 'color-line-bottom'></span><div class='btn-group-vertical w-100' role='group'><div class='btn-group' role='group'><input type='text' class='btn-name-right' id='userName' value='You' placeholder='You'><button class = 'p-3 btn btn-light btn-right w-100 h-100'>Timer</button></div><div id = 'missingPieceBlack' class='missing-piece'></div></div></div>";
+    "<span class = 'color-line-bottom'></span><div class='btn-group-vertical w-100' role='group'><div class='btn-group' role='group'><input type='text' class='btn-name-right' id='userName' value='You' placeholder='You'><button class = 'p-3 btn btn-light btn-right w-100 h-100'>Timer</button></div><div id = 'missingPieceBlack' class='missing-piece-bottom'></div></div></div>";
   document.getElementById("rightbar").innerHTML = rightStr;
-  missingPiecesUpdate();
+  if (rightPgnArr.length != 0 && rightPgnArr.length != 1) {
+    let tableContainer = document.querySelector(".table-container");
+    tableContainer.scrollTop = tableContainer.scrollHeight;
+    missingPiecesUpdate();
+  }
+}
+function closeOptionsLeftDD() {
+  leftBarOpenStatus = [false, false, false];
+  makeLeftBar();
+}
+function showOptionsLeftDD(index1, index2) {
+  if (index2 === -1) {
+    leftBarOpenStatus = leftBarOpenStatus.map(function (ele, index3) {
+      return index3 === index1 ? !ele : false;
+    });
+    makeLeftBar();
+  } else {
+    ddActionsNew(index1, index2);
+    //makeLeftBar({ dd: index1, option: index2, strMenu: strMenu });
+  }
+}
+function ddActionsNew(index1, index2) {
+  let ddActionsFns = [
+    [
+      defaultBoardUI1,
+      changeBoardColorUI,
+      changeHighlightedColorUI,
+      changeCheckColorUI,
+      changePreviousColorUI,
+      changePieceType,
+      showColRow,
+      changeThemesUI,
+    ],
+    [
+      defaultBoardUI2,
+      highlightPreviousMoveSetting,
+      highlightSelectedPieceSetting,
+      showLegalMoveSetting,
+      changeValidMoveDot,
+    ],
+    [showPGN, importPGNUI],
+  ];
+  ddActionsFns[index1][index2]();
+}
+function changeColorRightBarTd(td) {
+  let clickedColor = "#88ffff";
+  let allTds = document.querySelectorAll(".right-bar-td");
+  allTds.forEach(function (element) {
+    element.style.removeProperty("color");
+  });
+  td.style.color = clickedColor;
 }
 function makeStartBoard() {
   for (row = 0; row <= 7; row++) {
@@ -553,13 +690,18 @@ function defaultFunctionSettings() {
     pawnPromotedto: "",
     castleDisable: -1,
   };
-  leftBarArrAll = ["Board Settings", "Move Settings", "Game Settings"];
+  leftBarArrAll = [
+    { txt: "Board Settings", icon: "fa-chess-board" },
+    { txt: "Move Settings", icon: "fa-arrows-up-down-left-right" },
+    { txt: "Game Settings", icon: "fa-book" },
+  ];
   console.clear();
 }
 
 //Board Logic
 function boardClick(row, col) {
-  // console.log(prevrow, prevcol, row, col);
+  closeOptionsLeftDD();
+  console.log(prevrow, prevcol, row, col);
   if (prevrow === -1 || prevcol === -1) {
     if (
       Object.keys(boardArr[row][col]).length != 0 &&
@@ -646,7 +788,7 @@ function boardClick(row, col) {
       makeBoard();
       if (Object.keys(temp).length != 0)
         pointUpdateCounter(temp.piece, temp.color);
-      if (document.getElementById("dd3").value === leftBarArr3[0]) showPGN();
+      //if (document.getElementById("dd3").value === leftBarArr3[0]) showPGN();
     } else if (moveStartConditon(row, col)) {
       prevrow = row;
       prevcol = col;
@@ -1015,7 +1157,7 @@ function pawnPromotionClick(row, col) {
   lastMoveJSON.checkBool = underCheck.bool;
   pgnArr.push(lastMoveJSON);
   makePGN();
-  if (document.getElementById("dd3").value === leftBarArr3[0]) showPGN();
+  //if (document.getElementById("dd3").value === leftBarArr3[0]) showPGN();
   makeBoard();
   virtualBoardArr = boardArrLine.map(function (ele) {
     return [...boardArrLine];
@@ -1248,7 +1390,7 @@ function undoMove() {
   missingPiecesUpdate();
   checkCheck();
   makePGN();
-  if (document.getElementById("dd3").value === leftBarArr3[0]) showPGN();
+  //if (document.getElementById("dd3").value === leftBarArr3[0]) showPGN();
   highlightPieceBool = false;
   makeBoard();
   highlightPieceBool = true;
@@ -1396,7 +1538,7 @@ function makePGN() {
 function importGame() {
   makeStartBoard();
   pgnStr = document.getElementById("moveHistory").value;
-  document.getElementById("dd3").value = leftBarArr3[0];
+  //document.getElementById("dd3").value = leftBarArr3[0];
   showPGN();
   decodePGN();
   isLoadingPGNPawnPromotionJSON = {};
@@ -1651,13 +1793,13 @@ function dd1Actions() {
   } else if (index === 7) {
     changeThemesUI();
   } else if (index === 8) {
-    document.getElementById("dd1").value = leftBarArrAll[0];
+    document.getElementById("dd1").value = leftBarArrAll[0].txt;
     document.getElementById("dd1menu").innerHTML = "";
   }
   document.getElementById("dd2menu").innerHTML = "";
-  document.getElementById("dd2").value = leftBarArrAll[1];
+  document.getElementById("dd2").value = leftBarArrAll[1].txt;
   document.getElementById("dd3menu").innerHTML = "";
-  document.getElementById("dd3").value = leftBarArrAll[2];
+  document.getElementById("dd3").value = leftBarArrAll[2].txt;
 }
 function dd2Actions() {
   let value = document.getElementById("dd2").value;
@@ -1675,13 +1817,13 @@ function dd2Actions() {
   } else if (index === 4) {
     changeValidMoveDot();
   } else if (index === 5) {
-    document.getElementById("dd2").value = leftBarArrAll[1];
+    document.getElementById("dd2").value = leftBarArrAll[1].txt;
     document.getElementById("dd2menu").innerHTML = "";
   }
   document.getElementById("dd1menu").innerHTML = "";
-  document.getElementById("dd1").value = leftBarArrAll[0];
+  document.getElementById("dd1").value = leftBarArrAll[0].txt;
   document.getElementById("dd3menu").innerHTML = "";
-  document.getElementById("dd3").value = leftBarArrAll[2];
+  document.getElementById("dd3").value = leftBarArrAll[2].txt;
 }
 function dd3Actions() {
   let value = document.getElementById("dd3").value;
@@ -1693,13 +1835,13 @@ function dd3Actions() {
   } else if (index === 1) {
     importPGNUI();
   } else if (index === 2) {
-    document.getElementById("dd3").value = leftBarArrAll[2];
+    document.getElementById("dd3").value = leftBarArrAll[2].txt;
     document.getElementById("dd3menu").innerHTML = "";
   }
   document.getElementById("dd1menu").innerHTML = "";
-  document.getElementById("dd1").value = leftBarArrAll[0];
+  document.getElementById("dd1").value = leftBarArrAll[0].txt;
   document.getElementById("dd2menu").innerHTML = "";
-  document.getElementById("dd2").value = leftBarArrAll[1];
+  document.getElementById("dd2").value = leftBarArrAll[1].txt;
 }
 
 //LeftBar dd1
