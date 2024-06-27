@@ -326,7 +326,6 @@ function makeCell(row, col) {
 }
 function makeBoard() {
   str = "";
-  //showCustomAlert("Hello World");
   for (i = 0; i <= 7; i++) {
     str +=
       "<div class='container'><div class='row row-cols-8 justify-content-center'>";
