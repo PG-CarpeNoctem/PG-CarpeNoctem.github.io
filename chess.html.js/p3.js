@@ -27,7 +27,7 @@ function dataReload() {
     blendColors("#ffffff", clrYellow, 0.5),
     blendColors("#33b3a6", clrYellow, 0.5),
   ];
-  //clr3 = "#69923e";
+  popUpCount = 0;
   time = "";
   navIconArr = [
     { icon: "fa-regular fa-hourglass-half", animation: "fa-shake" },
@@ -84,6 +84,58 @@ function dataReload() {
     "piecesWooden/",
     "piecesWooden2/",
   ];
+  baseThemePath = "images/Themes/";
+  themeLogoPaths = ["logo1.png", "logo2.png", "logo3.png"];
+  themesValueArr = [
+    {
+      id: "rt0",
+      name: "chess.com",
+      clr1: "#EEEED2",
+      clr2: "#769656",
+      clr1c: "#F98A75",
+      clr2c: "#BE5F35",
+      clr1p: "#F6F682",
+      clr2p: "#BAC949",
+      clr1x: "#BAC949",
+      clr2x: "#FFFA5C",
+    },
+    // {
+    //   id: "rt0",
+    //   name: "chess.com",
+    //   clr1: "#EEEED2",
+    //   clr2: "#69923E",
+    //   clr1c: blendColors("#EEEED2", clrRed, 0.6),
+    //   clr2c: blendColors("#69923E", clrRed, 0.6),
+    //   clr1p: "#BACA44",
+    //   clr2p: "#BACA44",
+    //   clr1x: "#FFFA5C",
+    //   clr2x: "#FFFA5C",
+    // },
+    {
+      id: "rt1",
+      name: "lichess.org",
+      clr1: "#F0D9B7",
+      clr2: "#B58763",
+      clr1c: "#EA4334",
+      clr2c: "#DB3423",
+      clr1p: "#CFD17B",
+      clr2p: "#ACA249",
+      clr1x: "#87986A",
+      clr2x: "#6A6F42",
+    },
+    {
+      id: "rt2",
+      name: "pastel",
+      clr1: "#DEE3E6",
+      clr2: "#8CA2AD",
+      clr1c: "FF9999",
+      clr2c: "#D37878",
+      clr1p: "#78BEDE",
+      clr2p: "#5795B2",
+      clr1x: "#99DFFF",
+      clr2x: "#78B6D3",
+    },
+  ];
   imagePath = baseImagePath + pieceImagePaths[0];
   pieceImageArr = [
     "pawn+white.png",
@@ -108,14 +160,14 @@ function dataReload() {
   leftBarArr = [
     [
       { txt: "Default", icon: "fa-user" },
+      { txt: "Themes", icon: "fa-chess" },
       { txt: "Change Board Color", icon: "fa-palette" },
-      { txt: "Add Background Image", icon: "fa-image" },
       { txt: "Change Highlighted Color", icon: "fa-highlighter" },
       { txt: "Change Check Color", icon: "fa-plus" },
       { txt: "Change Previous Moves Color", icon: "fa-circle-arrow-left" },
       { txt: "Change Piece Type", icon: "fa-chess-pawn" },
+      { txt: "Add Background Image", icon: "fa-image" },
       { txt: "Show Column & Row", icon: "fa-eye" },
-      { txt: "Themes", icon: "fa-chess" },
     ],
     [
       { txt: "Default", icon: "fa-user" },
@@ -190,6 +242,8 @@ function navActions(index) {
     makeStartBoard();
     makeBoard();
     makeRightBar();
+    if (popUpCount === 0 && time != "") showPopup("Load New Theme?");
+    popUpCount++;
   } else {
     if (time === "") {
       document.getElementById("leftbar").innerHTML = "";
@@ -254,8 +308,11 @@ function makeCell(row, col) {
     return ele.row === row && ele.col === col;
   });
   if (Object.keys(boardArr[row][col]).length != 0) {
-    draggableStr = ((moveCount%2==0&&boardArr[row][col].color==="white")||(moveCount%2==1&&boardArr[row][col].color==="black"))?
-      "draggable=true ondragstart='drag(event, " + row + ", " + col + ")'" : " draggable=false ";
+    draggableStr =
+      (moveCount % 2 == 0 && boardArr[row][col].color === "white") ||
+      (moveCount % 2 == 1 && boardArr[row][col].color === "black")
+        ? "draggable=true ondragstart='drag(event, " + row + ", " + col + ")'"
+        : " draggable=false ";
     pieceStr =
       "<img src='" +
       imagePath +
@@ -299,7 +356,7 @@ function makeCell(row, col) {
     pgnArr[pgnArr.length - 1].prevrow === row &&
     pgnArr[pgnArr.length - 1].prevcol === col &&
     highlightPreviousBool
-  ) 
+  )
     cellColor = (row + col) % 2 === 0 ? clr1p : clr2p;
   else if (
     pgnArr.length != 0 &&
@@ -309,8 +366,23 @@ function makeCell(row, col) {
   )
     cellColor = (row + col) % 2 === 0 ? clr1p : clr2p;
   else cellColor = (row + col) % 2 === 0 ? clr1 : clr2;
-  if (pgnArr.length===9 && ((col===0 && row===0)||(col===1&&row===1))){
-    console.log(pgnArr[pgnArr.length - 1],row,col,cellColor,highlightPreviousBool,highlightPieceBool,clr1,clr1p,clr1x,prevrow,prevcol);
+  if (
+    pgnArr.length === 9 &&
+    ((col === 0 && row === 0) || (col === 1 && row === 1))
+  ) {
+    console.log(
+      pgnArr[pgnArr.length - 1],
+      row,
+      col,
+      cellColor,
+      highlightPreviousBool,
+      highlightPieceBool,
+      clr1,
+      clr1p,
+      clr1x,
+      prevrow,
+      prevcol
+    );
   }
   if (underCheck.bool && underCheck.posx === row && underCheck.posy === col) {
     cellColor = (row + col) % 2 === 0 ? clr1c : clr2c;
@@ -434,8 +506,7 @@ function makeBoard() {
   for (i = 0; i <= 7; i++) {
     str +=
       "<div class='container'><div class='row row-cols-8 justify-content-center'>";
-    for (j = 0; j <= 7; j++)
-      str += makeCell(i, j);
+    for (j = 0; j <= 7; j++) str += makeCell(i, j);
     str += "</div></div>";
   }
   let labelArrMap = labelArr.map(function (ele) {
@@ -611,7 +682,6 @@ function defaultFunctionSettings() {
   if (!runningTestCases) console.clear();
 }
 
-
 //Make LeftBar
 function makeLeftBar(leftBarInstance) {
   if (!time) return;
@@ -706,14 +776,14 @@ function ddActionsNew(index1, index2) {
   let ddActionsFns = [
     [
       defaultBoardUI1,
+      changeThemesUI,
       changeBoardColorUI,
-      addBackgroundPicture,
       changeHighlightedColorUI,
       changeCheckColorUI,
       changePreviousColorUI,
       changePieceType,
+      addBackgroundPicture,
       showColRow,
-      changeThemesUI,
     ],
     [
       defaultBoardUI2,
@@ -792,7 +862,7 @@ function boardClickByUser(row, col) {
 }
 function boardClick(row, col) {
   //console.log(prevrow, prevcol, row, col);
-  closeOptionsLeftDD();
+  // closeOptionsLeftDD();
   if (!comingFromRedoMoveBool) lastMoveUndoMoveBool = false;
   if (prevrow === -1 || prevcol === -1) {
     if (
@@ -1280,7 +1350,6 @@ function pawnPromotionClick(row, col) {
   lastMoveJSON.checkBool = underCheck.bool;
   pgnArr.push(lastMoveJSON);
   makePGN();
-  //if (document.getElementById("dd3").value === leftBarArr3[0]) showPGN();
   makeBoard();
   virtualBoardArr = boardArrLine.map(function (ele) {
     return [...boardArrLine];
@@ -1596,9 +1665,15 @@ function pointDifference(color) {
   let pointsStr = "";
   let evalNumber = diffPoints();
   if (evalNumber > 0 && color === "white") {
-    pointsStr = "<p class='point-diff-font-white'>&nbsp;+" + Math.abs(evalNumber) + "</p>";
+    pointsStr =
+      "<p class='point-diff-font-white'>&nbsp;+" +
+      Math.abs(evalNumber) +
+      "</p>";
   } else if (evalNumber < 0 && color === "black") {
-    pointsStr = "<p class='point-diff-font-black'>&nbsp;+" + Math.abs(evalNumber) + "</p>";
+    pointsStr =
+      "<p class='point-diff-font-black'>&nbsp;+" +
+      Math.abs(evalNumber) +
+      "</p>";
   } else {
     pointsStr = "";
   }
@@ -1986,6 +2061,128 @@ function defaultBoardUI1() {
     "' disabled></input></div><div class='btn-group-vertical w-100' role='group'><div class='input-group input-group-pkr w-100'><div class='form-check form-switch menu-block w-100'><label class='form-check-label' for='colRowSwitch'> Column & Row :</label><input class='form-check-input' type='checkbox' role='switch' id='colRowSwitch' checked disabled></div></div></div></div>";
   document.getElementById("dd1menu").innerHTML = menuStr;
 }
+function changeThemesUI() {
+  let radioStr = themeLogoPaths
+    .map(function (ele, index) {
+      return (
+        "<input type='radio' class='btn-check' name='theme1' id='rt" +
+        index +
+        "' autocomplete='off' " +
+        (imagePath === baseImagePath + ele ? "checked" : "") +
+        "><label class='btn btn-outline-light' for='rt" +
+        index +
+        "'><img src = '" +
+        baseThemePath +
+        ele +
+        "' width = '100' draggable=false class = 'theme-img-piece'></label>"
+      );
+    })
+    .join("");
+  let menuStr =
+    "<div class='btn-group-horizontal radio-piece-class justify-content-center' role='group'>" +
+    radioStr +
+    "</div>";
+  document.getElementById("dd1menu").innerHTML = menuStr;
+  const radioButtons = document.querySelectorAll('input[name="theme1"]');
+  radioButtons.forEach((button) => {
+    button.addEventListener("change", function () {
+      themeLogoChange(button.id);
+    });
+  });
+}
+function themeLogoChange(id) {
+  if (virtualBoardStr != "") {
+    showCustomAlert("Please Select Piece To Promote");
+    return;
+  }
+  setBackgroundImage("");
+  let localeJson = themesValueArr.find(function (ele) {
+    return ele.id === id;
+  });
+  clr1 = localeJson.clr1;
+  clr2 = localeJson.clr2;
+  clr1x = localeJson.clr1x;
+  clr2x = localeJson.clr2x;
+  clr1c = localeJson.clr1c;
+  clr2c = localeJson.clr2c;
+  clr1p = localeJson.clr1p;
+  clr2p = localeJson.clr2p;
+  colRowBoolInitial = true;
+  colRowBool = colRowBoolInitial;
+  if (localeJson.name === "pastel") {
+    imagePath = baseImagePath + pieceImagePaths[2];
+  } else imagePath = baseImagePath + pieceImagePaths[0];
+  let menuStr =
+    "<div class='btn-group-vertical w-100' role='group'><div class='input-group input-group-pkr w-100'><div class='input-group-text menu-block menu-block-width-default'>Color 1:</div><input type='color' class='form-control form-control-color-pkr' id='colorPicker1' value='" +
+    localeJson.clr1 +
+    "'></input></div><div class='input-group input-group-pkr w-100'><div class='input-group-text menu-block  menu-block-width-default'>Color 2:</div><input type='color' class='form-control form-control-color-pkr' id='colorPicker2' value='" +
+    localeJson.clr2 +
+    "'></input></div></div><div class='btn-group-vertical w-100' role='group'><div class='input-group input-group-pkr w-100'><div class='input-group-text menu-block  menu-block-check-width-default'>Check Color 1:</div><input type='color' class='form-control form-control-color-pkr' id='colorPicker5' value='" +
+    localeJson.clr1c +
+    "'></input></div><div class='input-group input-group-pkr w-100'><div class='input-group-text menu-block  menu-block-check-width-default'>Check Color 2:</div><input type='color' class='form-control form-control-color-pkr' id='colorPicker6' value='" +
+    localeJson.clr2c +
+    "'></input></div></div><div class='btn-group-vertical w-100' role='group'><div class='input-group input-group-pkr w-100'><div class='input-group-text menu-block  menu-block-previous-width-default'>Previous Color 1:</div><input type='color' class='form-control form-control-color-pkr' id='colorPicker7' value='" +
+    localeJson.clr1p +
+    "'></input></div><div class='input-group input-group-pkr w-100'><div class='input-group-text menu-block  menu-block-previous-width-default'>Previous Color 2:</div><input type='color' class='form-control form-control-color-pkr' id='colorPicker8' value='" +
+    localeJson.clr2p +
+    "'></input></div></div><div class='btn-group-vertical w-100' role='group'><div class='input-group input-group-pkr w-100'><div class='input-group-text menu-block  menu-block-highlight-width-default'>Highlighted Color 1:</div><input type='color' class='form-control form-control-color-pkr' id='colorPicker3' value='" +
+    localeJson.clr1x +
+    "')></input></div><div class='input-group input-group-pkr w-100'><div class='input-group-text menu-block  menu-block-highlight-width-default'>Highlighted Color 2:</div><input type='color' class='form-control form-control-color-pkr' id='colorPicker4' value='" +
+    localeJson.clr2x +
+    "'></input></div><div class='btn-group-vertical w-100' role='group'><div class='input-group input-group-pkr w-100'><div class='form-check form-switch menu-block w-100'><label class='form-check-label' for='colRowSwitch'> Column & Row :</label><input class='form-check-input' type='checkbox' role='switch' id='colRowSwitch' checked></div></div></div></div>";
+  document.getElementById("dd1menu").innerHTML = menuStr;
+  makeBoard();
+  makeRightBar();
+  const colorPicker1 = document.getElementById("colorPicker1");
+  const colorPicker2 = document.getElementById("colorPicker2");
+  const colorPicker3 = document.getElementById("colorPicker3");
+  const colorPicker4 = document.getElementById("colorPicker4");
+  const colorPicker5 = document.getElementById("colorPicker5");
+  const colorPicker6 = document.getElementById("colorPicker6");
+  const colorPicker7 = document.getElementById("colorPicker7");
+  const colorPicker8 = document.getElementById("colorPicker8");
+  colorPicker1.addEventListener("input", () => colorChanged(1));
+  colorPicker2.addEventListener("input", () => colorChanged(2));
+  colorPicker3.addEventListener("input", () => colorChanged(3));
+  colorPicker4.addEventListener("input", () => colorChanged(4));
+  colorPicker5.addEventListener("input", () => colorChanged(5));
+  colorPicker6.addEventListener("input", () => colorChanged(6));
+  colorPicker7.addEventListener("input", () => colorChanged(7));
+  colorPicker8.addEventListener("input", () => colorChanged(8));
+  colorPicker1.addEventListener("focus", updateBoxShadow);
+  colorPicker1.addEventListener("blur", resetBoxShadow);
+  colorPicker1.addEventListener("input", updateBoxShadow);
+  colorPicker2.addEventListener("focus", updateBoxShadow);
+  colorPicker2.addEventListener("blur", resetBoxShadow);
+  colorPicker2.addEventListener("input", updateBoxShadow);
+  colorPicker3.addEventListener("focus", updateBoxShadow);
+  colorPicker3.addEventListener("blur", resetBoxShadow);
+  colorPicker3.addEventListener("input", updateBoxShadow);
+  colorPicker4.addEventListener("focus", updateBoxShadow);
+  colorPicker4.addEventListener("blur", resetBoxShadow);
+  colorPicker4.addEventListener("input", updateBoxShadow);
+  colorPicker5.addEventListener("focus", updateBoxShadow);
+  colorPicker5.addEventListener("blur", resetBoxShadow);
+  colorPicker5.addEventListener("input", updateBoxShadow);
+  colorPicker6.addEventListener("focus", updateBoxShadow);
+  colorPicker6.addEventListener("blur", resetBoxShadow);
+  colorPicker6.addEventListener("input", updateBoxShadow);
+  colorPicker7.addEventListener("focus", updateBoxShadow);
+  colorPicker7.addEventListener("blur", resetBoxShadow);
+  colorPicker7.addEventListener("input", updateBoxShadow);
+  colorPicker8.addEventListener("focus", updateBoxShadow);
+  colorPicker8.addEventListener("blur", resetBoxShadow);
+  colorPicker8.addEventListener("input", updateBoxShadow);
+  const colRowInput = document.getElementById("colRowSwitch");
+  colRowInput.addEventListener("change", function () {
+    if (this.checked) {
+      colRowBool = true;
+    } else {
+      colRowBool = false;
+    }
+    makeBoard();
+  });
+}
 function changeBoardColorUI() {
   let menuStr =
     "<div class='btn-group-vertical w-100' role='group'><div class='input-group input-group-pkr w-100'><div class='input-group-text menu-block menu-block-width'>Pick Color 1:</div><input type='color' class='form-control form-control-color-pkr' id='colorPicker1' value='" +
@@ -2004,23 +2201,6 @@ function changeBoardColorUI() {
   colorPicker2.addEventListener("focus", updateBoxShadow);
   colorPicker2.addEventListener("blur", resetBoxShadow);
   colorPicker2.addEventListener("input", updateBoxShadow);
-}
-function addBackgroundPicture() {
-  menuStr =
-    "<div class='input-group input-group-pkr w-100'><input type='file' id='bgUpload' accept='image/*'/></div>";
-  document.getElementById("dd1menu").innerHTML = menuStr;
-  document
-    .getElementById("bgUpload")
-    .addEventListener("change", function (event) {
-      const file = event.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function (e) {
-          setBackgroundImage(e.target.result);
-        };
-        reader.readAsDataURL(file);
-      }
-    });
 }
 function changeHighlightedColorUI() {
   let menuStr =
@@ -2168,10 +2348,22 @@ function showColRow() {
     makeBoard();
   });
 }
-function changeThemesUI() {
-  showCustomAlert("Under Maintenance");
-  document.getElementById("dd1").value = leftBarArrAll[0];
-  document.getElementById("dd1menu").innerHTML = "";
+function addBackgroundPicture() {
+  menuStr =
+    "<div class='input-group input-group-pkr w-100'><input type='file' id='bgUpload' accept='image/*'/></div>";
+  document.getElementById("dd1menu").innerHTML = menuStr;
+  document
+    .getElementById("bgUpload")
+    .addEventListener("change", function (event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          setBackgroundImage(e.target.result);
+        };
+        reader.readAsDataURL(file);
+      }
+    });
 }
 function setBackgroundImage(imageUrl) {
   document.body.style.backgroundImage = `url(${imageUrl})`;
@@ -2427,7 +2619,6 @@ function blendColors(colorA, colorB, amount) {
 function showCustomAlert(message) {
   const alertBox = document.getElementById("customAlert");
   const alertMessage = document.getElementById("customAlertMessage");
-
   alertMessage.textContent = message;
   alertBox.style.display = "block";
   alertBox.style.opacity = 1; // Fade in
@@ -2480,6 +2671,28 @@ function switchNavTab_LoadGame() {
   setActiveTab("Navbar1");
   navActions(1);
 }
+function showPopup(message) {
+  const popupOverlay = document.getElementById("popupOverlay");
+  const popup = document.getElementById("customPopup");
+  const popupMessage = document.getElementById("popupMessage");
+  popupMessage.textContent = message;
+  popupOverlay.classList.add("visible");
+  popup.classList.add("visible");
+}
+function hidePopup() {
+  const popupOverlay = document.getElementById("popupOverlay");
+  const popup = document.getElementById("customPopup");
+  popupOverlay.classList.remove("visible");
+  popup.classList.remove("visible");
+}
+function handleConfirm() {
+  themeLogoChange("rt2");
+  closeOptionsLeftDD();
+  hidePopup();
+}
+function handleCancel() {
+  hidePopup();
+}
 
 // Drag and Drop
 function allowDrop(event) {
@@ -2498,7 +2711,7 @@ function drag(event, row, col) {
   prevrow = -1;
   prevcol = -1;
   boardClick(row, col);
-  return false;    
+  return false;
 }
 function drop(event, row, col) {
   event.preventDefault();
@@ -2640,8 +2853,10 @@ let testCases = [
     pgnStr:
       " 1.Nc3 Nc6 2.Nf3 Nf6 3.Nd4 Nd5 4.Ne4 Ne5 5.Nf5 Nf4 6.e3 e6 7.Bc4 Bc5 8.Qf3 Qf6 9.d3 d6 10.Bd2 Bd7 11.O-O-O O-O 12.Nfxd6 Nfxd3+ 13.Kb1 Nf4 14.Nf5 Ned3 15.Ned6 Nd5 16.Nd4 N3f4 17.N4f5 Nd3 18.Nd4 N5f4 19.N6f5 Qxd4 20.exd4 Bxd4 21.Qxf4 Nxf4 22.Bxe6 fxe6 23.Nxd4 Nxg2 24.Nxe6 Bxe6 25.Bh6 gxh6 26.h3 Bxh3 27.Rxh3 Rad8 28.Rdh1 Rfe8 29.R1h2 Re5 30.Rxg2+ Kh8 31.Rgh2 Rde8 32.Rh1 R8e6 33.R3h2 Re8 34.Rxh6 R5e7 35.R1h5 Re2 36.Rh2 Rxf2 37.R6h3 Rff8 38.Rd3 c5 39.b4 cxb4 40.c4 b3 41.c5 bxa2+ 42.Kb2 b5 43.cxb6 a1=N 44.bxa7 Nb3 45.a8=N Nc5 46.Nc7 Na4+ 47.Kb3 Rb8+ 48.Kc2 Rf2+ 49.Kd1 Rb1+ ",
   },
-  {name : "/g4",
-    pgnStr:" 1.d4 d5 2.e4 dxe4 3.f4 exf3 4.d5 c5 5.dxc6 fxg2 6.cxb7 gxh1=Q 7.bxa8=Q Nh6 8.Na3 e5 9.Be3 Bc5 10.Qe2 O-O 11.Bd2 Nf5 12.O-O-O Qg5 13.Nf3 Qxf3 14.Qexf3 Na6 15.Bd3 Be6 16.Bxg5 Rxa8 17.Qd5 Bxd5 "
+  {
+    name: "/g4",
+    pgnStr:
+      " 1.d4 d5 2.e4 dxe4 3.f4 exf3 4.d5 c5 5.dxc6 fxg2 6.cxb7 gxh1=Q 7.bxa8=Q Nh6 8.Na3 e5 9.Be3 Bc5 10.Qe2 O-O 11.Bd2 Nf5 12.O-O-O Qg5 13.Nf3 Qxf3 14.Qexf3 Na6 15.Bd3 Be6 16.Bxg5 Rxa8 17.Qd5 Bxd5 ",
   },
   {
     name: "/3rooks",
