@@ -2048,3 +2048,255 @@ function autoPlay(depth) {
   console.log(movesSimulated);
   console.log(newMove);
 }
+
+//Drag and Drop
+
+// Function to make a cell
+function makeCell(row, col) {
+  let pieceStr = "";
+  let possibleMoveStr = "";
+  let extraInfoStr = "";
+  let labelStr =
+    col === 0 ? "<div class='p-1 label-col-box'>" + (8 - row) + "</div>" : "";
+
+  num = showMovesArr.findIndex(function (ele) {
+    return ele.row === row && ele.col === col;
+  });
+
+  if (Object.keys(boardArr[row][col]).length != 0) {
+    pieceStr =
+      "<img src='" +
+      imagePath +
+      boardArr[row][col].key +
+      "' draggable='true' ondragstart='drag(event, " +
+      row +
+      ", " +
+      col +
+      ")' onclick='hello(" +
+      row +
+      "," +
+      col +
+      ")'>";
+  }
+
+  if (num != -1 && legalBool) {
+    possibleMoveStr =
+      "<svg xmlns='http://www.w3.org/2000/svg' class='possible-move-square' viewBox='0 0 80 80' width='80' height='80'><circle cx='40' cy='40' r=" +
+      highlightDotRadius +
+      " fill='rgba(100, 100, 100, 0.4)'/></svg>";
+  }
+
+  // Add cell coloring logic
+  if (prevrow === row && prevcol === col && highlightPieceBool) {
+    cellColor = (row + col) % 2 === 0 ? clr1x : clr2x;
+  } else if (
+    pgnArr.length != 0 &&
+    pgnArr[pgnArr.length - 1].prevrow === row &&
+    pgnArr[pgnArr.length - 1].prevcol === col &&
+    highlightPreviousBool
+  ) {
+    cellColor = (row + col) % 2 === 0 ? clr1p : clr2p;
+  } else if (
+    pgnArr.length != 0 &&
+    pgnArr[pgnArr.length - 1].newrow === row &&
+    pgnArr[pgnArr.length - 1].newcol === col &&
+    highlightPreviousBool
+  ) {
+    cellColor = (row + col) % 2 === 0 ? clr1p : clr2p;
+  } else {
+    cellColor = (row + col) % 2 === 0 ? clr1 : clr2;
+  }
+
+  if (underCheck.bool && underCheck.posx === row && underCheck.posy === col) {
+    cellColor = (row + col) % 2 === 0 ? clr1c : clr2c;
+    if (prevrow === row && prevcol === col && highlightPieceBool) {
+      cellColor = (row + col) % 2 === 0 ? clr1x : clr2x;
+    }
+  }
+
+  return (
+    labelStr +
+    "<div class='cellBox cellBorder" +
+    extraInfoStr +
+    "' id='cell-" +
+    row +
+    "-" +
+    col +
+    "' ondrop='drop(event, " +
+    row +
+    ", " +
+    col +
+    ")' ondragover='allowDrop(event)' onclick='boardClick(" +
+    row +
+    "," +
+    col +
+    ")' style='background-color: " +
+    cellColor +
+    "'>" +
+    pieceStr +
+    possibleMoveStr +
+    "</div>"
+  );
+}
+
+// Allow drop event
+function allowDrop(event) {
+  event.preventDefault();
+}
+
+// Drag event to show possible moves
+function drag(event, row, col) {
+  event.dataTransfer.setData("text", event.target.parentElement.id);
+  // Show possible moves without re-rendering the board
+  showValidMovesForDragging(row, col);
+}
+
+// Drop event to finalize the move
+function drop(event, row, col) {
+  event.preventDefault();
+  let fromSquareId = event.dataTransfer.getData("text");
+  let fromSquare = document.getElementById(fromSquareId);
+  let toSquare = event.target;
+
+  if (toSquare.classList.contains("cellBox")) {
+    toSquare.appendChild(fromSquare.querySelector("img"));
+  } else {
+    toSquare.parentElement.appendChild(fromSquare.querySelector("img"));
+  }
+
+  let fromSquareRowCol = fromSquareId.split("-").slice(1).map(Number);
+  let toSquareRowCol = [row, col];
+
+  let isValidMove = showMovesArr.some(function (ele) {
+    return ele.row === row && ele.col === col;
+  });
+
+  if (isValidMove) {
+    console.log(`Moved from ${fromSquareRowCol} to ${toSquareRowCol}`);
+    updateBoardState(fromSquareRowCol, toSquareRowCol);
+    makeBoard(); // Redraw the board after the move
+  } else {
+    fromSquare.appendChild(toSquare.querySelector("img"));
+    showCustomAlert("Invalid Move");
+  }
+}
+
+// Show valid moves for dragging
+function showValidMovesForDragging(row, col) {
+  prevrow = row;
+  prevcol = col;
+  showValidMoves();
+}
+
+// Update the board state
+function updateBoardState(fromSquareRowCol, toSquareRowCol) {
+  let [fromRow, fromCol] = fromSquareRowCol;
+  let [toRow, toCol] = toSquareRowCol;
+
+  boardArr[toRow][toCol] = boardArr[fromRow][fromCol];
+  boardArr[fromRow][fromCol] = {};
+}
+
+function boardClick(row, col) {
+  if (prevrow === -1 || prevcol === -1) {
+    if (
+      Object.keys(boardArr[row][col]).length != 0 &&
+      moveStartConditon(row, col)
+    ) {
+      prevrow = row;
+      prevcol = col;
+      showValidMoves();
+      inCheckCondition(boardArr[row][col].color);
+      if (boardArr[prevrow][prevcol].piece === "king") checkCastle();
+      makeBoard();
+    }
+  } else if (prevrow === row && prevcol === col) {
+    prevrow = -1;
+    prevcol = -1;
+    showMovesArr = [];
+    makeBoard();
+  } else {
+    let obj = showMovesArr.find(function (ele) {
+      return ele.row === row && ele.col === col;
+    });
+    if (obj) {
+      lastMove(row, col);
+      let localePgnGenerationStopBool = true;
+      if (
+        checkEnPassant(row, col, boardArr[prevrow][prevcol].color) &&
+        pgnArr.length != 0
+      ) {
+        lastMoveJSON.enPassant = true;
+        lastMoveJSON.cutPiece =
+          boardArr[pgnArr[pgnArr.length - 1].newrow][
+            pgnArr[pgnArr.length - 1].newcol
+          ];
+        boardArr[pgnArr[pgnArr.length - 1].newrow][
+          pgnArr[pgnArr.length - 1].newcol
+        ] = {};
+        let pointColor =
+          boardArr[prevrow][prevcol].color === "white" ? "black" : "white";
+        pointUpdateCounter("pawn", pointColor);
+      }
+      if (
+        ((boardArr[prevrow][prevcol].color === "white" && row === 0) ||
+          (boardArr[prevrow][prevcol].color === "black" && row === 7)) &&
+        boardArr[prevrow][prevcol].piece === "pawn"
+      ) {
+        if (Object.keys(isLoadingPGNPawnPromotionJSON).length === 0) {
+          pawnPromotion(row, col, boardArr[prevrow][prevcol].color);
+          localePgnGenerationStopBool = false;
+        }
+      }
+      if (boardArr[prevrow][prevcol].piece === "king") {
+        if (Math.abs(prevrow - row) === 0 && Math.abs(prevcol - col) === 2) {
+          lastMoveJSON.castleBool = true;
+          castleMove(row, col, boardArr[prevrow][prevcol].color);
+          lastMoveJSON.castleDisable = moveCount;
+          castleBool["short" + boardArr[prevrow][prevcol].color] = false;
+          castleBool["long" + boardArr[prevrow][prevcol].color] = false;
+        }
+        if (boardArr[prevrow][prevcol].piece === "rook") {
+          let sideStr = prevcol === 0 ? "long" : "short";
+          lastMoveJSON.castleDisable = moveCount;
+          castleBool[sideStr + boardArr[prevrow][prevcol].color] = false;
+        }
+        let temp = boardArr[row][col];
+        boardArr[row][col] = boardArr[prevrow][prevcol];
+        boardArr[prevrow][prevcol] = {};
+        if (Object.keys(isLoadingPGNPawnPromotionJSON).length != 0) {
+          boardArr[isLoadingPGNPawnPromotionJSON.row][
+            isLoadingPGNPawnPromotionJSON.col
+          ] = isLoadingPGNPawnPromotionJSON.json;
+          missingPiecesUpdate();
+        }
+        moveCount++;
+        prevrow = -1;
+        prevcol = -1;
+        showMovesArr = [];
+        checkCheck();
+        lastMoveJSON.checkBool = underCheck.bool;
+        if (localePgnGenerationStopBool) {
+          pgnArr.push(lastMoveJSON);
+        }
+        makePGN();
+        makeBoard();
+        if (Object.keys(temp).length != 0) {
+          pointUpdateCounter(temp.piece, temp.color);
+        }
+        if (document.getElementById("dd3").value === leftBarArr3[0]) {
+          showPGN();
+        }
+      } else if (moveStartConditon(row, col)) {
+        prevrow = row;
+        prevcol = col;
+        showValidMoves();
+        inCheckCondition(boardArr[row][col].color);
+        if (boardArr[prevrow][prevcol].piece === "king") {
+          checkCastle();
+        }
+        makeBoard();
+      }
+    }
+  }
+}

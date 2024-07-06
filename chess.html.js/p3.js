@@ -35,6 +35,9 @@ function dataReload() {
     { icon: "fa-solid fa-pen-to-square", animation: "fa-fade" },
     { icon: "fa-solid fa-computer", animation: "fa-beat" },
   ];
+  bodyImageURL = [
+    "https://img.freepik.com/free-photo/abstract-fire-desktop-wallpaper-realistic-blazing-flame-image_53876-147448.jpg?size=626&ext=jpg&ga=GA1.1.1546980028.1719792000&semt=ais_user",
+  ];
   navArr = ["Time Limit", "New Game", "Analysis", "Computer"];
   chessArr = [];
   temp = {};
@@ -73,7 +76,6 @@ function dataReload() {
     "<div class='icon-label2'><i class='fa-solid fa-sun icon' style='color:#FDDA0D'></i>",
   ];
   baseImagePath = "images/";
-  //"../chess.html.js/images/";
   pieceImagePaths = [
     "piecesClassic/",
     "pieces/",
@@ -107,6 +109,7 @@ function dataReload() {
     [
       { txt: "Default", icon: "fa-user" },
       { txt: "Change Board Color", icon: "fa-palette" },
+      { txt: "Add Background Image", icon: "fa-image" },
       { txt: "Change Highlighted Color", icon: "fa-highlighter" },
       { txt: "Change Check Color", icon: "fa-plus" },
       { txt: "Change Previous Moves Color", icon: "fa-circle-arrow-left" },
@@ -127,6 +130,9 @@ function dataReload() {
     ],
   ];
   leftBarOpenStatus = [false, false, false];
+  userNewMoveClick = false;
+  previousHighlightData = {};
+  runningTestCases = false;
 }
 
 //Routine Function Calls
@@ -140,22 +146,6 @@ function routineFunctionCalls() {
 
 //Basic UI
 function createNavbar() {
-  // function createNavbar() {
-  //   navBarArr = navArr.map(function (ele, index) {
-  //     return (
-  //       "<li class='nav-item'><a class='nav-link nav-item' aria-current='page'  href = '#' id = 'Navbar" +
-  //       index +
-  //       "' onclick = navActions(" +
-  //       index +
-  //       ")>" +
-  //       navIconArr[index] +
-  //       " " +
-  //       ele +
-  //       "</a></li>"
-  //     );
-  //   });
-  //   document.getElementById("navbar").innerHTML = navBarArr.join("");
-  // }
   const navbar = document.getElementById("navbar");
   navArr.forEach((ele, index) => {
     const li = document.createElement("li");
@@ -188,6 +178,7 @@ function navActions(index) {
   makeLeftBar();
   makeRightBar();
   if (index == 0) {
+    time = "";
     document.getElementById("leftbar").innerHTML = "";
     document.getElementById("rightbar").innerHTML = "";
     makeTimer();
@@ -198,6 +189,7 @@ function navActions(index) {
     }
     makeStartBoard();
     makeBoard();
+    makeRightBar();
   } else {
     if (time === "") {
       document.getElementById("leftbar").innerHTML = "";
@@ -252,6 +244,7 @@ function makeCell(row, col) {
   let possibleMoveStr = "";
   let extraInfoStr = "";
   let labelStr = "";
+  let draggableStr = "";
   if (col === 0) {
     labelStr = colRowBool
       ? "<div class = 'p-1 label-col-box'>" + (8 - row) + "</div>"
@@ -260,16 +253,25 @@ function makeCell(row, col) {
   num = showMovesArr.findIndex(function (ele) {
     return ele.row === row && ele.col === col;
   });
-  if (Object.keys(boardArr[row][col]).length != 0)
+  if (Object.keys(boardArr[row][col]).length != 0) {
+    draggableStr = ((moveCount%2==0&&boardArr[row][col].color==="white")||(moveCount%2==1&&boardArr[row][col].color==="black"))?
+      "draggable=true ondragstart='drag(event, " + row + ", " + col + ")'" : " draggable=false ";
     pieceStr =
-      "<img src = '" +
+      "<img src='" +
       imagePath +
       boardArr[row][col].key +
-      "' onclick = hello(" +
+      "' id='img" +
+      row +
+      "-" +
+      col +
+      "' " +
+      draggableStr +
+      " onclick='hello(" +
       row +
       "," +
       col +
-      ")>";
+      ")'>";
+  }
   if (num != -1 && legalBool)
     if (Object.keys(boardArr[row][col]).length != 0)
       possibleMoveStr =
@@ -297,6 +299,120 @@ function makeCell(row, col) {
     pgnArr[pgnArr.length - 1].prevrow === row &&
     pgnArr[pgnArr.length - 1].prevcol === col &&
     highlightPreviousBool
+  ) 
+    cellColor = (row + col) % 2 === 0 ? clr1p : clr2p;
+  else if (
+    pgnArr.length != 0 &&
+    pgnArr[pgnArr.length - 1].newrow === row &&
+    pgnArr[pgnArr.length - 1].newcol === col &&
+    highlightPreviousBool
+  )
+    cellColor = (row + col) % 2 === 0 ? clr1p : clr2p;
+  else cellColor = (row + col) % 2 === 0 ? clr1 : clr2;
+  if (pgnArr.length===9 && ((col===0 && row===0)||(col===1&&row===1))){
+    console.log(pgnArr[pgnArr.length - 1],row,col,cellColor,highlightPreviousBool,highlightPieceBool,clr1,clr1p,clr1x,prevrow,prevcol);
+  }
+  if (underCheck.bool && underCheck.posx === row && underCheck.posy === col) {
+    cellColor = (row + col) % 2 === 0 ? clr1c : clr2c;
+    if (prevrow === row && prevcol === col && highlightPieceBool)
+      cellColor = (row + col) % 2 === 0 ? clr1x : clr2x;
+  }
+  return (
+    labelStr +
+    "<div class='cellBox cellBorder" +
+    extraInfoStr +
+    "' id='cell-" +
+    row +
+    "-" +
+    col +
+    "' " +
+    " draggable=false ondrop='drop(event, " +
+    row +
+    ", " +
+    col +
+    ")' ondragover='allowDrop(event)' onclick='boardClickByUser(" +
+    row +
+    "," +
+    col +
+    ")' style='background-color: " +
+    cellColor +
+    "'>" +
+    pieceStr +
+    possibleMoveStr +
+    "</div>"
+  );
+}
+function highlightMoveCells() {
+  let possibleMoveStr = "";
+  for (let row = 0; row <= 7; row++) {
+    for (let col = 0; col <= 7; col++) {
+      possibleMoveStr = "";
+      num = showMovesArr.findIndex(function (ele) {
+        return ele.row === row && ele.col === col;
+      });
+      numNotShow = -1;
+      if (previousHighlightData.showMovesArr)
+        numNotShow = previousHighlightData.showMovesArr.findIndex(function (
+          ele
+        ) {
+          return ele.row === row && ele.col === col;
+        });
+      if (num != -1 && legalBool) {
+        if (Object.keys(boardArr[row][col]).length != 0) {
+          possibleMoveStr =
+            "<svg id='cellHighlight-" +
+            row +
+            "-" +
+            col +
+            "' xmlns='http://www.w3.org/2000/svg' class='possible-move-square' viewBox='0 0 80 80' width='80' height='80'><circle cx='40' cy='40' r=" +
+            highlightDotRadius +
+            " fill='rgba(256, 100, 100, 0.4)'/></svg></span>";
+        } else {
+          possibleMoveStr =
+            "<svg id='cellHighlight-" +
+            row +
+            "-" +
+            col +
+            "' xmlns='http://www.w3.org/2000/svg' class='possible-move-square' viewBox='0 0 80 80' width='80' height='80'><circle cx='40' cy='40' r=" +
+            highlightDotRadius +
+            " fill='rgba(100, 100, 100, 0.4)'/></svg>";
+        }
+      }
+      if (possibleMoveStr.length > 0)
+        document
+          .getElementById("cell-" + row + "-" + col)
+          .insertAdjacentHTML("beforeend", possibleMoveStr);
+      if (numNotShow != -1 && numNotShow != num) {
+        let element = document.getElementById(
+          "cellHighlight-" + row + "-" + col
+        );
+        if (element) element.remove();
+      }
+    }
+  }
+  highlightSelectedCell();
+  if (previousHighlightData.showMovesArr) unhighlightPreviousSelectedCell();
+  previousHighlightData = {};
+}
+function highlightSelectedCell() {
+  let row = prevrow;
+  let col = prevcol;
+  cellColor = (row + col) % 2 === 0 ? clr1x : clr2x;
+  if (underCheck.bool && underCheck.posx === row && underCheck.posy === col) {
+    cellColor = (row + col) % 2 === 0 ? clr1x : clr2x;
+  }
+  let element = document.getElementById("cell-" + row + "-" + col);
+  element.setAttribute("style", "background-color:" + cellColor + ";");
+}
+function unhighlightPreviousSelectedCell() {
+  let row = previousHighlightData.prevrow;
+  let col = previousHighlightData.prevcol;
+  cellColor = "";
+  if (
+    pgnArr.length != 0 &&
+    pgnArr[pgnArr.length - 1].prevrow === row &&
+    pgnArr[pgnArr.length - 1].prevcol === col &&
+    highlightPreviousBool
   )
     cellColor = (row + col) % 2 === 0 ? clr1p : clr2p;
   else if (
@@ -309,31 +425,17 @@ function makeCell(row, col) {
   else cellColor = (row + col) % 2 === 0 ? clr1 : clr2;
   if (underCheck.bool && underCheck.posx === row && underCheck.posy === col) {
     cellColor = (row + col) % 2 === 0 ? clr1c : clr2c;
-    if (prevrow === row && prevcol === col && highlightPieceBool)
-      cellColor = (row + col) % 2 === 0 ? clr1x : clr2x;
   }
-  return (
-    labelStr +
-    "<div class= 'cellBox cellBorder" +
-    extraInfoStr +
-    "' onclick = boardClick(" +
-    row +
-    "," +
-    col +
-    ") style='background-color: " +
-    cellColor +
-    "'>" +
-    pieceStr +
-    possibleMoveStr +
-    "</div>"
-  );
+  let element = document.getElementById("cell-" + row + "-" + col);
+  element.setAttribute("style", "background-color:" + cellColor + ";");
 }
 function makeBoard() {
   str = "";
   for (i = 0; i <= 7; i++) {
     str +=
       "<div class='container'><div class='row row-cols-8 justify-content-center'>";
-    for (j = 0; j <= 7; j++) str = str += makeCell(i, j);
+    for (j = 0; j <= 7; j++)
+      str += makeCell(i, j);
     str += "</div></div>";
   }
   let labelArrMap = labelArr.map(function (ele) {
@@ -468,13 +570,17 @@ function defaultFunctionSettings() {
   prevcol = -1;
   showMovesArr = [];
   pgnArr = [];
+  redoMoveArr = [];
   rightPgnArr = [];
   pgnStr = "";
   virtualBoardStr = "";
   labelArr = ["a", "b", "c", "d", "e", "f", "g", "h"];
   underCheck = { bool: false, posx: -1, posy: -1 };
   afterMoveInCheckBool = false;
+  lastMoveUndoMoveBool = false;
+  comingFromRedoMoveBool = false;
   isLoadingPGNPawnPromotionJSON = {};
+  bodyImage = bodyImageURL[0];
   lastMoveJSON = {
     prevrow: -1,
     prevcol: -1,
@@ -488,7 +594,7 @@ function defaultFunctionSettings() {
     enPassant: false,
     castleBool: false,
     moveNumber: 1,
-    pawnPromotion: false,
+    promotionBool: false,
     ambiguityBoolColSame: false,
     ambiguityBool: false,
     pawnPromotedto: "",
@@ -499,11 +605,17 @@ function defaultFunctionSettings() {
     { txt: "Move Settings", icon: "fa-arrows-up-down-left-right" },
     { txt: "Game Settings", icon: "fa-book" },
   ];
-  console.clear();
+  leftBarOpenStatus = [false, false, false];
+  userNewMoveClick = false;
+  previousHighlightData = {};
+  if (!runningTestCases) console.clear();
 }
 
+
 //Make LeftBar
-function makeLeftBar(actionsData) {
+function makeLeftBar(leftBarInstance) {
+  if (!time) return;
+  let leftBarAllInstance = leftBarInstance ? leftBarInstance : leftBarArrAll;
   let missingPieceElement = document.getElementById("missingPiece");
   missingPieceStr = missingPieceElement ? missingPieceElement.innerHTML : "";
   leftStr =
@@ -512,7 +624,7 @@ function makeLeftBar(actionsData) {
     "<button class = 'p-3 btn btn-light btn-block-red w-100 h-100' onclick = 'undoMove()'><i class='fa-solid fa-left-long'></i> Undo Move</button>" +
     "<button class = 'p-3 btn btn-light btn-green w-100 h-100' onclick = 'redoMove()'><i class='fa-solid fa-right-long'></i> Redo Move</button></div>" +
     "<div class = 'height-break'></div>";
-  leftStr += leftBarArrAll
+  leftStr += leftBarAllInstance
     .map(function (ele, index) {
       return makeLeftDD(ele, index, leftBarOpenStatus[index]);
     })
@@ -525,7 +637,7 @@ function makeLeftBar(actionsData) {
 }
 function makeLeftDD(ele, index1, isOpen) {
   let str =
-    "<button class='p-3 btn btn-light btn-block h-100' onclick='showOptionsLeftDD(" +
+    "<button class='p-3 btn btn-light left-bar-block h-100' onclick='showOptionsLeftDD(" +
     index1 +
     ",-1)' >" +
     "<i class='fas  " +
@@ -533,9 +645,15 @@ function makeLeftDD(ele, index1, isOpen) {
     "'></i>" +
     "&nbsp;&nbsp;" +
     ele.txt +
-    "<i class='align-right-fa-icon fas " +
-    (isOpen ? "fa-caret-up" : "fa-caret-down") +
-    "'></i></button>" +
+    (ele.txt === leftBarArrAll[index1].txt
+      ? "<i class='align-right-fa-icon fas " +
+        (isOpen ? "fa-caret-up" : "fa-caret-down") +
+        "'></i>"
+      : "") +
+    (ele.txt !== leftBarArrAll[index1].txt
+      ? "<i class='align-right-fa-icon fas fa-caret-up'></i>"
+      : "") +
+    "</button>" +
     "<div class='w-100' role='group' id='dd" +
     (index1 + 1) +
     "menu'>" +
@@ -567,12 +685,19 @@ function closeOptionsLeftDD() {
   makeLeftBar();
 }
 function showOptionsLeftDD(index1, index2) {
+  if (virtualBoardStr != "") {
+    showCustomAlert("Please Select Piece To Promote");
+    return;
+  }
   if (index2 === -1) {
     leftBarOpenStatus = leftBarOpenStatus.map(function (ele, index3) {
       return index3 === index1 ? !ele : false;
     });
     makeLeftBar();
   } else {
+    let leftBarAllInstance = [...leftBarArrAll];
+    leftBarAllInstance[index1] = leftBarArr[index1][index2];
+    makeLeftBar(leftBarAllInstance);
     ddActionsNew(index1, index2);
     //makeLeftBar({ dd: index1, option: index2, strMenu: strMenu });
   }
@@ -582,6 +707,7 @@ function ddActionsNew(index1, index2) {
     [
       defaultBoardUI1,
       changeBoardColorUI,
+      addBackgroundPicture,
       changeHighlightedColorUI,
       changeCheckColorUI,
       changePreviousColorUI,
@@ -603,7 +729,10 @@ function ddActionsNew(index1, index2) {
 
 //Make RightBar
 function makeRightBar() {
+  if (!time) return;
   let tableStr = "";
+  let rightPgnArrOriginalSize = rightPgnArr.length;
+  if (rightPgnArr.length === 1) rightPgnArr.push(" ");
   let tableArr = rightPgnArr.map(function (ele, index) {
     if (index % 2 == 0)
       return (
@@ -625,19 +754,21 @@ function makeRightBar() {
     "<thead>" +
     "<div class='btn-group rounded-1' role='group'><button class = 'p-3 btn btn-light btn-right-block w-100 h-100' onclick = 'copyPGN()'><i class='fa-solid fa-copy'></i></button><button class = 'p-3 btn btn-light btn-right-block w-100 h-100' onclick = 'backwardFastPGN()'><i class='fa-solid fa-backward-fast'></i></button><button class = 'p-3 btn btn-light btn-right-block w-100 h-100' onclick = 'backwardStepPGN()'><i class='fa-solid fa-backward-step'></i></button><button class = 'p-3 btn btn-light btn-right-block w-100 h-100' onclick = 'forwardStepPGN()'><i class='fa-solid fa-forward-step'></i></button><button class = 'p-3 btn btn-light btn-right-block w-100 h-100' onclick = 'forwardFastPGN()'><i class='fa-solid fa-forward-fast'></i></button><button class = 'p-3 btn btn-light btn-right-block w-100 h-100' onclick = 'flipBoard()'><i class='fa-solid fa-rotate'></i></button></div>" +
     "</thead>";
-  if (rightPgnArr.length != 0 && rightPgnArr.length != 1) {
+  if (rightPgnArr.length != 0) {
     tableStr =
       headStr +
-      "<div class = 'table-container'><table class = 'table-dark table-block'>" +
+      "<div class = 'table-container'><table class = 'table-dark table-block'  id='showLeftBarMoves'>" +
       tableArr.join("") +
       "</table></div>";
   }
-  console.log(tableStr);
   let rightStr =
     "<div class = 'containerRight'><div id = 'missingPieceWhite' class='missing-piece-top'></div><div class='btn-group-vertical w-100' role='group'><div class='btn-group' role='group'><input type='text' class='btn-name-right' id='opponentName' value='Opponent' placeholder='Opponent'><button class = 'p-3 btn btn-light btn-right w-100 h-100'>Timer</button></div><span class = 'color-line-top'></span>" +
     tableStr +
     "<span class = 'color-line-bottom'></span><div class='btn-group-vertical w-100' role='group'><div class='btn-group' role='group'><input type='text' class='btn-name-right' id='userName' value='You' placeholder='You'><button class = 'p-3 btn btn-light btn-right w-100 h-100'>Timer</button></div><div id = 'missingPieceBlack' class='missing-piece-bottom'></div></div></div>";
-  document.getElementById("rightbar").innerHTML = rightStr;
+
+  if (rightPgnArr && rightPgnArrOriginalSize > 1) {
+    document.getElementById("showLeftBarMoves").innerHTML = tableArr.join("");
+  } else document.getElementById("rightbar").innerHTML = rightStr;
   if (rightPgnArr.length != 0 && rightPgnArr.length != 1) {
     let tableContainer = document.querySelector(".table-container");
     tableContainer.scrollTop = tableContainer.scrollHeight;
@@ -654,9 +785,15 @@ function changeColorRightBarTd(td) {
 }
 
 //Board Logic
+function boardClickByUser(row, col) {
+  userNewMoveClick = true;
+  boardClick(row, col);
+  userNewMoveClick = false;
+}
 function boardClick(row, col) {
+  //console.log(prevrow, prevcol, row, col);
   closeOptionsLeftDD();
-  console.log(prevrow, prevcol, row, col);
+  if (!comingFromRedoMoveBool) lastMoveUndoMoveBool = false;
   if (prevrow === -1 || prevcol === -1) {
     if (
       Object.keys(boardArr[row][col]).length != 0 &&
@@ -667,7 +804,7 @@ function boardClick(row, col) {
       showValidMoves();
       inCheckCondition(boardArr[row][col].color);
       if (boardArr[prevrow][prevcol].piece === "king") checkCastle();
-      makeBoard();
+      highlightMoveCells();
     }
   } else if (prevrow === row && prevcol === col) {
     prevrow = -1;
@@ -728,6 +865,9 @@ function boardClick(row, col) {
         boardArr[isLoadingPGNPawnPromotionJSON.row][
           isLoadingPGNPawnPromotionJSON.col
         ] = isLoadingPGNPawnPromotionJSON.json;
+        lastMoveJSON.promotionBool = true;
+        lastMoveJSON.pawnPromotedto = isLoadingPGNPawnPromotionJSON.json.piece;
+        isLoadingPGNPawnPromotionJSON = {};
         missingPiecesUpdate();
       }
       moveCount++;
@@ -738,9 +878,12 @@ function boardClick(row, col) {
       lastMoveJSON.checkBool = underCheck.bool;
       if (localePgnGenerationStopBool) {
         pgnArr.push(lastMoveJSON);
+        if (userNewMoveClick) redoMoveArr.splice(0, redoMoveArr.length);
       }
       makePGN();
+      if (!localePgnGenerationStopBool) pgnArr.push(lastMoveJSON);
       makeBoard();
+      if (!localePgnGenerationStopBool) pgnArr.pop();
       if (Object.keys(temp).length != 0)
         pointUpdateCounter(temp.piece, temp.color);
       //if (document.getElementById("dd3").value === leftBarArr3[0]) showPGN();
@@ -1031,31 +1174,43 @@ function pawnPromotion(row, col, color) {
   str = "";
   for (i = 0; i <= 7; i++) {
     str +=
-      "<div class='container' style='background-color: rgba(0,0,0,0.6)'><div class='row row-cols-8 justify-content-center'>";
-    for (j = 0; j <= 7; j++) str = str += makeVirtualCell(i, j);
+      "<div class='container'><div class='row row-cols-8 justify-content-center'>";
+    for (j = 0; j <= 7; j++) str += makeVirtualCell(i, j, false);
     str += "</div></div>";
+  }
+  strPiece = "";
+  for (i = 0; i <= 7; i++) {
+    strPiece +=
+      "<div class='container'><div class='row row-cols-8 justify-content-center'>";
+    for (j = 0; j <= 7; j++) strPiece += makeVirtualCell(i, j, true);
+    strPiece += "</div></div>";
   }
   let labelArrMap = labelArr.map(function (ele) {
     return "<div class='virtualBox abcd-label'></div>";
   });
   virtualBoardStr =
-    "<div class = 'containerFrame-virtual'>" +
+    "<div class = 'containerFrame-virtual containerFrame-virtual-z-index-low'>" +
     str +
-    "<div class='row row-cols-8 abcd-label-padding' style = 'background-color : rgba(0,0,0,0.6)'>" +
+    "<div class='row row-cols-8 abcd-label-height-adjustment-virtual-black-cover abcd-label-padding' style='background-color: rgba(0,0,0,0.6)'>" +
+    labelArrMap.join("") +
+    "</div></div>";
+  virtualBoardStr +=
+    "<div class = 'containerFrame-virtual containerFrame-virtual-pieces-z-index-high'>" +
+    strPiece +
+    "<div class='row row-cols-8 abcd-label-height-adjustment-virtual-black-cover abcd-label-padding' >" +
     labelArrMap.join("") +
     "</div></div>";
   makeBoard();
 }
-function makeVirtualCell(row, col) {
+function makeVirtualCell(row, col, showPieceBool) {
   let pieceStr = "";
   let colorStr = "";
   let extraInfoStr = "";
   let onclickStr = "";
-  let labelStr = col === 0 ? "<div class = 'p-1 label-col-box'></div>" : "";
   num = showMovesArr.findIndex(function (ele) {
     return ele.row === row && ele.col === col;
   });
-  if (Object.keys(virtualBoardArr[row][col]).length != 0)
+  if (showPieceBool && Object.keys(virtualBoardArr[row][col]).length != 0)
     pieceStr =
       "<img src = '" +
       imagePath +
@@ -1064,7 +1219,7 @@ function makeVirtualCell(row, col) {
       row +
       "," +
       col +
-      ")>";
+      ") draggable=false>";
   if (row === 0 && col === 0) {
     extraInfoStr = "-top-start";
   } else if (row === 7 && col === 0) {
@@ -1074,14 +1229,27 @@ function makeVirtualCell(row, col) {
   } else if (row === 7 && col === 7) {
     extraInfoStr = "-bottom-end";
   }
-  if (Object.keys(virtualBoardArr[row][col]).length != 0) {
+  let labelStr =
+    col === 0
+      ? "<div class = 'p-1 label-col-box virtualBorder" +
+        extraInfoStr +
+        (showPieceBool ? " 'style='background-color: rgba(0,0,0,0.6)'" : " '") +
+        "></div>"
+      : "";
+  if (showPieceBool && Object.keys(virtualBoardArr[row][col]).length != 0) {
     colorStr =
       virtualBoardArr[row][col].color === "white"
-        ? " gradient-circle-white'"
-        : " gradient-circle-black'";
+        ? " gradient-circle gradient-circle-white'"
+        : " gradient-circle gradient-circle-black'";
     onclickStr = " onclick = pawnPromotionClick(" + row + "," + col + ")>";
+  } else if (Object.keys(virtualBoardArr[row][col]).length != 0) {
+    colorStr = "'  style='background-color: rgba(0,0,0,0.6)'";
+    onclickStr = " >";
+  } else if (showPieceBool) {
+    colorStr = "'  ";
+    onclickStr = " >";
   } else {
-    colorStr = "'";
+    colorStr = "'  style='background-color: rgba(0,0,0,0.6)'";
     onclickStr = " >";
   }
   return (
@@ -1098,7 +1266,7 @@ function pawnPromotionClick(row, col) {
   virtualBoardStr = "";
   let localerow = row < 4 ? 0 : 7;
   boardArr[localerow][col] = virtualBoardArr[row][col];
-  lastMoveJSON.pawnPromotion = true;
+  lastMoveJSON.promotionBool = true;
   lastMoveJSON.pawnPromotedto = virtualBoardArr[row][col].piece;
   pointCount[virtualBoardArr[row][col].color + "pawn"]--;
   pointCount[
@@ -1117,6 +1285,7 @@ function pawnPromotionClick(row, col) {
   virtualBoardArr = boardArrLine.map(function (ele) {
     return [...boardArrLine];
   });
+  redoMoveArr.splice(0, redoMoveArr.length);
 }
 function knightConditions(row, col) {
   let bool = false;
@@ -1178,14 +1347,22 @@ function checkCastle() {
   bool = checkCheckCastle(prevrow, 5) || checkCheckCastle(prevrow, 6);
   if (bool || underCheck.bool) {
     let index = showMovesArr.findIndex(function (ele) {
-      return ele.row === prevrow && ele.col === 6;
+      return (
+        ele.row === prevrow &&
+        ele.col === 6 &&
+        Math.abs(prevcol - ele.col) === 2
+      );
     });
     if (index != -1) showMovesArr.splice(index, 1);
   }
   bool = checkCheckCastle(prevrow, 2) || checkCheckCastle(prevrow, 3);
   if (bool || underCheck.bool) {
     let index = showMovesArr.findIndex(function (ele) {
-      return ele.row === prevrow && ele.col === 2;
+      return (
+        ele.row === prevrow &&
+        ele.col === 2 &&
+        Math.abs(prevcol - ele.col) === 2
+      );
     });
     if (index != -1) showMovesArr.splice(index, 1);
   }
@@ -1221,9 +1398,11 @@ function castleMove(row, col, color) {
   if (col > prevcol && castleBool["short" + color]) {
     boardArr[row][5] = boardArr[row][7];
     boardArr[row][7] = {};
+    lastMoveJSON.castleType = "short";
   } else if (col < prevcol && castleBool["long" + color]) {
     boardArr[row][3] = boardArr[row][0];
     boardArr[row][0] = {};
+    lastMoveJSON.castleType = "long";
   }
 }
 
@@ -1240,9 +1419,10 @@ function lastMove(row, col) {
     moveNumber: moveCount,
     checkBool: false,
     enPassant: false,
-    pawnPromotion: false,
+    promotionBool: false,
     castleBool: false,
     castleDisable: -1,
+    castleType: "",
     pawnPromotedto: "",
     ambiguityBoolColSame: checkAmbiguityLastMove(row, col, "Col"),
     ambiguityBool: checkAmbiguityLastMove(row, col, "Basic"),
@@ -1295,7 +1475,13 @@ function undoMove() {
     showCustomAlert("Please Select Piece To Promote");
     return;
   }
+  if (pgnArr.length === 0) {
+    showCustomAlert("Please Play Move");
+    return;
+  }
   let lastMoveJSON = pgnArr.pop();
+  redoMoveArr.push(lastMoveJSON);
+  lastMoveUndoMoveBool = true;
   boardArr[lastMoveJSON.prevrow][lastMoveJSON.prevcol] = lastMoveJSON.key;
   moveCount--;
   if (lastMoveJSON.castleDisable === lastMoveJSON.moveNumber) {
@@ -1313,7 +1499,7 @@ function undoMove() {
     pointCount[localeColor + "pawn"]++;
     boardArr[lastMoveJSON.newrow][lastMoveJSON.newcol] = {};
     boardArr[lastMoveJSON.prevrow][lastMoveJSON.newcol] = lastMoveJSON.cutPiece;
-  } else if (lastMoveJSON.pawnPromotion) {
+  } else if (lastMoveJSON.promotionBool) {
     boardArr[lastMoveJSON.newrow][lastMoveJSON.newcol] = lastMoveJSON.cutPiece;
     pointCount[lastMoveJSON.cutPiece.color + lastMoveJSON.cutPiece.piece]++;
     pointCount[lastMoveJSON.color + "pawn"]++;
@@ -1345,10 +1531,22 @@ function undoMove() {
   missingPiecesUpdate();
   checkCheck();
   makePGN();
-  //if (document.getElementById("dd3").value === leftBarArr3[0]) showPGN();
   highlightPieceBool = false;
   makeBoard();
   highlightPieceBool = true;
+}
+function redoMove() {
+  if (virtualBoardStr != "") {
+    showCustomAlert("Please Select Piece To Promote");
+    return;
+  }
+  if (!lastMoveUndoMoveBool || redoMoveArr.length === 0) {
+    showCustomAlert("Please Undo Move");
+    return;
+  }
+  let localeLastMove = redoMoveArr.pop();
+  comingFromRedoMoveBool = true;
+  makeBoardViaPGN(localeLastMove);
 }
 
 //Pieces Lost/ Points Update
@@ -1367,7 +1565,7 @@ function missingPiecesUpdate() {
         "<img src = '" +
         imagePath +
         pieceImageArr[index] +
-        "' height ='40'>"
+        "' height ='40' draggable=false>"
       ).repeat(ele);
   });
   let strMapWhite = missingPiecesCountArr.map(function (ele, index) {
@@ -1376,13 +1574,13 @@ function missingPiecesUpdate() {
         "<img src = '" +
         imagePath +
         pieceImageArr[index] +
-        "' height ='40'>"
+        "' height ='40' draggable=false>"
       ).repeat(ele);
   });
   document.getElementById("missingPieceBlack").innerHTML =
-    strMapBlack.join("") + pointDifference("black");
+    strMapBlack.join("") + pointDifference("white");
   document.getElementById("missingPieceWhite").innerHTML =
-    strMapWhite.join("") + pointDifference("white");
+    strMapWhite.join("") + pointDifference("black");
 }
 function diffPoints() {
   return boardArr.reduce(function (ans, ele) {
@@ -1395,58 +1593,19 @@ function diffPoints() {
   }, 0);
 }
 function pointDifference(color) {
-  let pointsStr = "<br>";
+  let pointsStr = "";
   let evalNumber = diffPoints();
   if (evalNumber > 0 && color === "white") {
-    pointsStr = "+" + evalNumber;
+    pointsStr = "<p class='point-diff-font-white'>&nbsp;+" + Math.abs(evalNumber) + "</p>";
   } else if (evalNumber < 0 && color === "black") {
-    pointsStr = "+" + Math.abs(evalNumber);
+    pointsStr = "<p class='point-diff-font-black'>&nbsp;+" + Math.abs(evalNumber) + "</p>";
   } else {
     pointsStr = "";
   }
   return pointsStr;
 }
 
-//PGN Encoder Decoder
-// function makePGN() {
-//   pgnStr = pgnArr.reduce(function (ans, ele) {
-//     let notation = "";
-//     let colPgn = ["a", "b", "c", "d", "e", "f", "g", "h"];
-//     if (ele.color === "white")
-//       notation += Math.floor(ele.moveNumber / 2) + 1 + ".";
-//     if (!ele.castleBool) {
-//       if (ele.piece === "knight") notation += "N";
-//       else if (ele.piece === "rook") notation += "R";
-//       else if (ele.piece === "bishop") notation += "B";
-//       else if (ele.piece === "king") notation += "K";
-//       else if (ele.piece === "queen") notation += "Q";
-//       if (ele.ambiguityBool)
-//         if (ele.ambiguityBoolColSame) notation += String(8 - ele.prevrow);
-//         else notation += colPgn[ele.prevcol];
-//       if (Object.keys(ele.cutPiece).length != 0) {
-//         if (ele.piece === "pawn") notation += colPgn[ele.prevcol];
-//         notation += "x";
-//       }
-//       notation += colPgn[ele.newcol];
-//       notation += String(8 - ele.newrow);
-//       if (ele.pawnPromotion) {
-//         notation += "=";
-//         if (ele.pawnPromotedto === "knight") notation += "N";
-//         else if (ele.pawnPromotedto === "rook") notation += "R";
-//         else if (ele.pawnPromotedto === "bishop") notation += "B";
-//         else if (ele.pawnPromotedto === "king") notation += "K";
-//         else if (ele.pawnPromotedto === "queen") notation += "Q";
-//       }
-//       if (ele.checkBool) notation += "+";
-//     } else if (ele.newcol === 6) {
-//       notation += "O-O";
-//     } else if (ele.newcol === 2) {
-//       notation += "O-O-O";
-//     }
-//     notation += " ";
-//     return ans + notation;
-//   }, " ");
-// }
+//PGN Encoder/Decoder
 function makePGN() {
   rightPgnArr = [];
   pgnStr = pgnArr.reduce(function (ans, ele) {
@@ -1470,7 +1629,7 @@ function makePGN() {
       }
       notation += colPgn[ele.newcol];
       notation += String(8 - ele.newrow);
-      if (ele.pawnPromotion) {
+      if (ele.promotionBool) {
         notation += "=";
         if (ele.pawnPromotedto === "knight") notation += "N";
         else if (ele.pawnPromotedto === "rook") notation += "R";
@@ -1493,7 +1652,10 @@ function makePGN() {
 function importGame() {
   makeStartBoard();
   pgnStr = document.getElementById("moveHistory").value;
-  //document.getElementById("dd3").value = leftBarArr3[0];
+  let storedGame = testCases.find(function (ele) {
+    return ele.name === pgnStr;
+  });
+  if (storedGame) pgnStr = storedGame.pgnStr;
   showPGN();
   decodePGN();
   isLoadingPGNPawnPromotionJSON = {};
@@ -1513,13 +1675,13 @@ function decodePGN() {
       newcol: -1,
       key: "",
       piece: "",
-      promotedtoPiecePoints: -1,
+      pawnPromotedtoPoints: -1,
       color: i % 2 == 0 ? "white" : "black",
       moveNumber: i,
       enPassantBool: false,
       cutPieceBool: false,
       promotionBool: false,
-      promotedtoPiece: "",
+      pawnPromotedto: "",
       checkBool: false,
       castleBool: false,
       castleType: "",
@@ -1567,17 +1729,17 @@ function decodePGN() {
           let localePointMultplierNumber =
             lastMovePGN.color === "black" ? -1 : 1;
           if (moveStrdecodePGN[j + 1] === "N") {
-            lastMovePGN.promotedtoPiece = "knight";
-            lastMovePGN.promotedtoPiecePoints = 3 * localePointMultplierNumber;
+            lastMovePGN.pawnPromotedto = "knight";
+            lastMovePGN.pawnPromotedtoPoints = 3 * localePointMultplierNumber;
           } else if (moveStrdecodePGN[j + 1] === "R") {
-            lastMovePGN.promotedtoPiece = "rook";
-            lastMovePGN.promotedtoPiecePoints = 5 * localePointMultplierNumber;
+            lastMovePGN.pawnPromotedto = "rook";
+            lastMovePGN.pawnPromotedtoPoints = 5 * localePointMultplierNumber;
           } else if (moveStrdecodePGN[j + 1] === "B") {
-            lastMovePGN.promotedtoPiece = "bishop";
-            lastMovePGN.promotedtoPiecePoints = 3 * localePointMultplierNumber;
+            lastMovePGN.pawnPromotedto = "bishop";
+            lastMovePGN.pawnPromotedtoPoints = 3 * localePointMultplierNumber;
           } else if (moveStrdecodePGN[j + 1] === "Q") {
-            lastMovePGN.promotedtoPiece = "queen";
-            lastMovePGN.promotedtoPiecePoints = 9 * localePointMultplierNumber;
+            lastMovePGN.pawnPromotedto = "queen";
+            lastMovePGN.pawnPromotedtoPoints = 9 * localePointMultplierNumber;
           }
         }
       }
@@ -1596,7 +1758,8 @@ function decodePGN() {
       if (lastMovePGN.ambiguityBool) {
         if (moveStrdecodePGN[1] >= "0" && moveStrdecodePGN[1] <= "9") {
           lastMovePGN.ambiguityBoolColSame = true;
-          lastMovePGN.prevrow = +moveStrdecodePGN[1];
+          //lastMovePGN.prevrow = +moveStrdecodePGN[1];
+          lastMovePGN.prevrow = 8 - moveStrdecodePGN[1];
         } else {
           let indexCol = colPgn.findIndex(function (ele) {
             return ele === moveStrdecodePGN[1];
@@ -1682,16 +1845,16 @@ function makeBoardViaPGN(lastMovePGN) {
     }
     if (lastMovePGN.promotionBool) {
       pointCount[color + "pawn"]--;
-      pointCount[color + lastMovePGN.promotedtoPiece]++;
-      pointCountInit[color + lastMovePGN.promotedtoPiece]++;
+      pointCount[color + lastMovePGN.pawnPromotedto]++;
+      pointCountInit[color + lastMovePGN.pawnPromotedto]++;
       isLoadingPGNPawnPromotionJSON = {
         row: lastMovePGN.newrow,
         col: lastMovePGN.newcol,
         json: {
-          piece: lastMovePGN.promotedtoPiece,
+          piece: lastMovePGN.pawnPromotedto,
           color: color,
-          key: lastMovePGN.promotedtoPiece + "+" + color + ".png",
-          points: lastMovePGN.promotedtoPiecePoints,
+          key: lastMovePGN.pawnPromotedto + "+" + color + ".png",
+          points: lastMovePGN.pawnPromotedtoPoints,
         },
       };
     } else isLoadingPGNPawnPromotionJSON = {};
@@ -1718,7 +1881,6 @@ function makeBoardViaPGN(lastMovePGN) {
   playMovePGN(newMoveLoad);
 }
 function playMovePGN(newMoveLoad) {
-  console.log(newMoveLoad);
   prevrow = -1;
   prevcol = -1;
   boardClick(newMoveLoad.prevrow, newMoveLoad.prevcol);
@@ -1801,6 +1963,7 @@ function dd3Actions() {
 
 //LeftBar dd1
 function defaultBoardUI1() {
+  setBackgroundImage("");
   makeDefaultUISettings1();
   makeBoard();
   let menuStr =
@@ -1841,6 +2004,23 @@ function changeBoardColorUI() {
   colorPicker2.addEventListener("focus", updateBoxShadow);
   colorPicker2.addEventListener("blur", resetBoxShadow);
   colorPicker2.addEventListener("input", updateBoxShadow);
+}
+function addBackgroundPicture() {
+  menuStr =
+    "<div class='input-group input-group-pkr w-100'><input type='file' id='bgUpload' accept='image/*'/></div>";
+  document.getElementById("dd1menu").innerHTML = menuStr;
+  document
+    .getElementById("bgUpload")
+    .addEventListener("change", function (event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          setBackgroundImage(e.target.result);
+        };
+        reader.readAsDataURL(file);
+      }
+    });
 }
 function changeHighlightedColorUI() {
   let menuStr =
@@ -1932,32 +2112,27 @@ function colorChanged(index) {
   makeBoard();
 }
 function changePieceType() {
+  let radioStr = pieceImagePaths
+    .map(function (ele, index) {
+      return (
+        "<input type='radio' class='btn-check' name='radio1' id='r" +
+        index +
+        "' autocomplete='off' " +
+        (imagePath === baseImagePath + ele ? "checked" : "") +
+        "><label class='btn btn-outline-light' for='r" +
+        index +
+        "'><img src = '" +
+        baseImagePath +
+        ele +
+        pieceImageArr[0] +
+        "' draggable=false class = 'radio-img-piece'></label>"
+      );
+    })
+    .join("");
   let menuStr =
-    "<div class='btn-group-horizontal radio-piece-class justify-content-center' role='group'><input type='radio' class='btn-check' name='radio1' id='r0' autocomplete='off' checked><label class='btn btn-outline-light' for='r0'><img src = '" +
-    baseImagePath +
-    pieceImagePaths[0] +
-    pieceImageArr[0] +
-    "' class = 'radio-img-piece'></label><input type='radio' class='btn-check' name='radio1' id='r1' autocomplete='off' ><label class='btn btn-outline-light' for='r1'><img src = '" +
-    baseImagePath +
-    pieceImagePaths[1] +
-    pieceImageArr[0] +
-    "' class = 'radio-img-piece'></label><input type='radio' class='btn-check' name='radio1' id='r2' autocomplete='off' ><label class='btn btn-outline-light' for='r2'><img src = '" +
-    baseImagePath +
-    pieceImagePaths[2] +
-    pieceImageArr[0] +
-    "' class = 'radio-img-piece'></label><input type='radio' class='btn-check' name='radio1' id='r3' autocomplete='off' ><label class='btn btn-outline-light' for='r3'><img src = '" +
-    baseImagePath +
-    pieceImagePaths[3] +
-    pieceImageArr[0] +
-    "' class = 'radio-img-piece'></label><input type='radio' class='btn-check' name='radio1' id='r4' autocomplete='off' ><label class='btn btn-outline-light' for='r4'><img src = '" +
-    baseImagePath +
-    pieceImagePaths[4] +
-    pieceImageArr[0] +
-    "' class = 'radio-img-piece'></label><input type='radio' class='btn-check' name='radio1' id='r5' autocomplete='off' ><label class='btn btn-outline-light' for='r5'><img src = '" +
-    baseImagePath +
-    pieceImagePaths[5] +
-    pieceImageArr[0] +
-    "' class = 'radio-img-piece'></label></div>";
+    "<div class='btn-group-horizontal radio-piece-class justify-content-center' role='group'>" +
+    radioStr +
+    "</div>";
   document.getElementById("dd1menu").innerHTML = menuStr;
   const radioButtons = document.querySelectorAll('input[name="radio1"]');
   radioButtons.forEach((button) => {
@@ -1971,19 +2146,8 @@ function pieceTypeChange(id) {
     showCustomAlert("Please Select Piece To Promote");
     return;
   }
-  if (id === "r0") {
-    imagePath = baseImagePath + pieceImagePaths[0];
-  } else if (id === "r1") {
-    imagePath = baseImagePath + pieceImagePaths[1];
-  } else if (id === "r2") {
-    imagePath = baseImagePath + pieceImagePaths[2];
-  } else if (id === "r3") {
-    imagePath = baseImagePath + pieceImagePaths[3];
-  } else if (id === "r4") {
-    imagePath = baseImagePath + pieceImagePaths[4];
-  } else if (id === "r5") {
-    imagePath = baseImagePath + pieceImagePaths[5];
-  }
+  let index = +id.substring(1, id.length);
+  imagePath = baseImagePath + pieceImagePaths[index];
   makeBoard();
   makeRightBar();
 }
@@ -2008,6 +2172,12 @@ function changeThemesUI() {
   showCustomAlert("Under Maintenance");
   document.getElementById("dd1").value = leftBarArrAll[0];
   document.getElementById("dd1menu").innerHTML = "";
+}
+function setBackgroundImage(imageUrl) {
+  document.body.style.backgroundImage = `url(${imageUrl})`;
+  document.body.style.backgroundSize = "cover";
+  document.body.style.backgroundPosition = "center";
+  document.body.style.backgroundRepeat = "no-repeat";
 }
 
 //LeftBar dd2
@@ -2106,6 +2276,10 @@ function showLegalMoveSetting() {
 
 //LeftBar dd3
 function showPGN() {
+  if (pgnStr === "") {
+    showCustomAlert("Please Play a Move First");
+    showOptionsLeftDD(-1, -1);
+  }
   let menuStr = "<p class = 'pgn-block'>" + pgnStr + "</p>";
   if (pgnStr.length != 0) {
     menuStr +=
@@ -2128,20 +2302,27 @@ function showPGN() {
 }
 function importPGNUI() {
   let menuStr =
-    "<span class = 'text-area-block w-100 justify-content-center'>Enter PGN : </span><div class='input-group'><textarea class='input-group-text text-area-block w-100' id='moveHistory'></textarea></div><button class = 'p-3 btn btn-light btn-green w-100 h-100' onclick = 'importGame()'><i class='fa-solid fa-upload'></i> Load Game</button>";
+    "<span class = 'text-area-block w-100 justify-content-center'>Enter PGN : </span><div class='input-group'><textarea class='input-group-text text-area-block w-100' id='moveHistory'></textarea></div><button class = 'p-3 btn btn-light btn-import w-100 h-100' id='importGameBtn' onclick = 'importGame()' disabled><i class='fa-solid fa-upload'></i> Load Game</button>";
   document.getElementById("dd3menu").innerHTML = menuStr;
   const textarea = document.getElementById("moveHistory");
-  function adjustTextareaHeight() {
-    textarea.style.height = "auto";
-    textarea.style.height = textarea.scrollHeight + "px";
-  }
   textarea.addEventListener("input", adjustTextareaHeight);
   textarea.addEventListener("paste", adjustTextareaHeight);
-  adjustTextareaHeight();
+}
+function adjustTextareaHeight() {
+  const textarea = document.getElementById("moveHistory");
+  textarea.style.height = "auto";
+  textarea.style.height = textarea.scrollHeight + "px";
+  let btnElement = document.getElementById("importGameBtn");
+  if (textarea && textarea.value.length > 0) btnElement.disabled = false;
+  else btnElement.disabled = true;
 }
 
 //UI RightBar Actions
 function copyPGN() {
+  if (virtualBoardStr != "") {
+    showCustomAlert("Please Select Piece To Promote");
+    return;
+  }
   const textToCopy = pgnStr;
   navigator.clipboard
     .writeText(textToCopy)
@@ -2153,18 +2334,39 @@ function copyPGN() {
     });
 }
 function backwardFastPGN() {
+  if (virtualBoardStr != "") {
+    showCustomAlert("Please Select Piece To Promote");
+    return;
+  }
   a = 10;
 }
 function backwardStepPGN() {
+  if (virtualBoardStr != "") {
+    showCustomAlert("Please Select Piece To Promote");
+    return;
+  }
   a = 10;
 }
 function forwardStepPGN() {
+  if (virtualBoardStr != "") {
+    showCustomAlert("Please Select Piece To Promote");
+    return;
+  }
   a = 10;
 }
 function forwardFastPGN() {
+  if (virtualBoardStr != "") {
+    showCustomAlert("Please Select Piece To Promote");
+    return;
+  }
+
   a = 10;
 }
 function flipBoard() {
+  if (virtualBoardStr != "") {
+    showCustomAlert("Please Select Piece To Promote");
+    return;
+  }
   let flipBoardArr = boardArrLine.map(function (ele) {
     return [...boardArrLine];
   });
@@ -2279,8 +2481,206 @@ function switchNavTab_LoadGame() {
   navActions(1);
 }
 
-//Computer
-function minimax() {
-  if (moveCount % 2 === 1) {
+// Drag and Drop
+function allowDrop(event) {
+  event.preventDefault();
+}
+function drag(event, row, col) {
+  event.dataTransfer.effectAllowed = "move";
+  event.dataTransfer.setData("text/plain", event.target.id);
+  if (prevrow != -1 || prevcol != -1) {
+    previousHighlightData = {
+      prevrow: prevrow,
+      prevcol: prevcol,
+      showMovesArr: [...showMovesArr],
+    };
+  } else previousHighlightData = {};
+  prevrow = -1;
+  prevcol = -1;
+  boardClick(row, col);
+  return false;    
+}
+function drop(event, row, col) {
+  event.preventDefault();
+  let num = showMovesArr.findIndex(function (ele) {
+    return ele.row === row && ele.col === col;
+  });
+  if (num >= 0) boardClick(row, col);
+  else {
+    showMovesArr.splice(0, showMovesArr.length);
+    prevrow = -1;
+    prevcol = -1;
+    makeBoard();
   }
+}
+function updateBoardState(fromSquareRowCol, toSquareRowCol) {
+  let [fromRow, fromCol] = fromSquareRowCol;
+  let [toRow, toCol] = toSquareRowCol;
+
+  boardArr[toRow][toCol] = boardArr[fromRow][fromCol];
+  boardArr[fromRow][fromCol] = {};
+}
+
+//Computer
+let movesSimulated = { do: 0, undo: 0 };
+function getPiecesofOneColor(boardPosition) {
+  return boardPosition.reduce(
+    function (acc, curr, row) {
+      curr.reduce(function (acc, curr1, col) {
+        if (curr1.color) {
+          acc[curr1.color].pieces.push({
+            ...curr1,
+            start: { row: row, col: col },
+          });
+          acc[curr1.color].totalPoints += curr1.points;
+        }
+        return acc;
+      }, acc);
+      return acc;
+    },
+    {
+      white: { pieces: [], totalPoints: 0 },
+      black: { pieces: [], totalPoints: 0 },
+    }
+  );
+}
+function generateAllPossibleMoves(boardPosition, moveColor) {
+  let colorWisePosition = getPiecesofOneColor(boardPosition);
+  let notMoveColor = moveColor === "white" ? "black" : "white";
+  let possibleMoves = [];
+  colorWisePosition[moveColor].pieces.map(function (piece) {
+    prevrow = piece.start.row;
+    prevcol = piece.start.col;
+    showValidMoves();
+    prevrow = -1;
+    prevcol = -1;
+    showMovesArr.map(function (mv) {
+      piece.end = mv;
+      let oppositePiece = colorWisePosition[notMoveColor].pieces.find(function (
+        ele
+      ) {
+        return ele.start.row === mv.row && ele.start.col === mv.col;
+      });
+      piece.score =
+        colorWisePosition[moveColor].totalPoints -
+        colorWisePosition[notMoveColor].totalPoints +
+        (oppositePiece ? oppositePiece.points : 0);
+      possibleMoves.push({ ...piece });
+      return "";
+    });
+    return "";
+  });
+  return possibleMoves;
+}
+function playMoveSimulator(newMoveSimulator) {
+  movesSimulated.do++;
+  prevrow = -1;
+  prevcol = -1;
+  boardClick(newMoveSimulator.start.row, newMoveSimulator.start.col);
+  boardClick(newMoveSimulator.end.row, newMoveSimulator.end.col);
+}
+function playToDepth(boardPosition, depth, moveColor) {
+  let possibleMoves = generateAllPossibleMoves(boardPosition, moveColor);
+  possibleMoves.splice(2, possibleMoves.length - 2);
+  if (depth === 1) {
+    let selectedMove = selectBestMove(possibleMoves);
+    return selectedMove;
+  }
+  let arr = [];
+  for (let i = 0; i < possibleMoves.length; i++) {
+    let oneMove = possibleMoves[i];
+    playMoveSimulator(oneMove);
+    let notMoveColor = moveColor === "white" ? "black" : "white";
+    arr.push(playToDepth(boardPosition, depth - 1, notMoveColor));
+    undoSimulatedMove();
+  }
+  let selectedMove = selectBestMove(arr);
+  return selectedMove;
+}
+function selectBestMove(possibleMoves) {
+  return possibleMoves.reduce(function (acc, curr) {
+    if (curr.score > acc.score) acc = curr;
+    return acc;
+  });
+}
+function undoSimulatedMove() {
+  undoMove();
+  movesSimulated.undo++;
+}
+function autoPlay(depth) {
+  movesSimulated = { do: 0, undo: 0 };
+  let newMove = playToDepth(boardArr, depth, "white");
+}
+
+//testing functions
+let testCases = [
+  { name: "/pp", pgnStr: " 1.e4 d5 2.exd5 c6 3.dxc6 a6 4.cxb7 a5 " },
+  {
+    name: "/fc",
+    pgnStr:
+      " 1.e4 e5 2.Nc3 Nc6 3.Nf3 Nf6 4.Nd5 Nd4 5.Ne3 Ne6 6.Nf5 Nf4 7.N5d4 N4d5 8.d3 d6 9.Bf4 Be7 10.Be2 Bf5 11.exf5 exf4 12.Ne5 dxe5 13.O-O Ne4 14.dxe4 f3 15.f6 O-O 16.fxe7 fxe2 17.exd8=R exd1=R 18.Rfxd1 Raxd8 19.Nc6 Ne7 20.Rxd8 Rxd8 21.Rd1 Rxd1+",
+  },
+  {
+    name: "/lc",
+    pgnStr:
+      "1.e4 d5 2.exd5 c6 3.dxc6 a6 4.cxb7 a5 5.bxa8=B Bg4 6.Nc3 Qxd2+ 7.Qxd2",
+  },
+  {
+    name: "/g1",
+    pgnStr:
+      "1.Nc3 Nc6 2.Nf3 Nf6 3.Nd4 Nd5 4.Ne4 Ne5 5.Nf5 Nf4 6.e3 e6 7.Bc4 Bc5 8.Qf3 Qf6 9.d3 d6 10.Bd2 Bd7 11.O-O-O O-O 12.Nfxd6 Nfxd3+ 13.Kb1 Nf4 14.Nf5 Ned3 15.Ned6 Nd5 16.Nd4 N3f4 17.N4f5 Nd3 18.Nd4 N5f4 19.N6f5 Qxd4 20.exd4 Bxd4 21.Qxf4 Nxf4 22.Bxe6 fxe6 23.Nxd4 Nxg2 24.Nxe6 Bxe6 25.Bh6 gxh6 26.h3 Bxh3 27.Rxh3 Rad8 28.Rdh1 Rfe8 29.R1h2 Re5 30.Rxg2+ Kh8 31.Rgh2 Rde8 32.Rh1 R8e6 33.R3h2 Re8 34.Rxh6 R5e7 35.R1h5 Re2 36.Rh2 Rxf2 37.R6h3 Rff8 38.Rd3 c5 39.b4 cxb4 40.c4 b3 41.c5 bxa2+ 42.Kb2 b5 43.cxb6 a1=N",
+  },
+  {
+    name: "/g2",
+    pgnStr:
+      " 1.a4 b5 2.axb5 c5 3.Rxa7 Qa5 4.Rxa5 d5 5.Ra7 c4 6.c3 g6 7.Rb7 Bg7 8.Rc7 Nf6 9.Rd7 O-O 10.Rc7 Ng4 11.Rd7 f5 12.Rc7 e5 13.Rb7 Rd8 14.Rc7 Bh6 15.Re7 Kh8 16.Rc7 Rf8 17.Rxh7+ ",
+  },
+  {
+    name: "/g3",
+    pgnStr:
+      " 1.Nc3 Nc6 2.Nf3 Nf6 3.Nd4 Nd5 4.Ne4 Ne5 5.Nf5 Nf4 6.e3 e6 7.Bc4 Bc5 8.Qf3 Qf6 9.d3 d6 10.Bd2 Bd7 11.O-O-O O-O 12.Nfxd6 Nfxd3+ 13.Kb1 Nf4 14.Nf5 Ned3 15.Ned6 Nd5 16.Nd4 N3f4 17.N4f5 Nd3 18.Nd4 N5f4 19.N6f5 Qxd4 20.exd4 Bxd4 21.Qxf4 Nxf4 22.Bxe6 fxe6 23.Nxd4 Nxg2 24.Nxe6 Bxe6 25.Bh6 gxh6 26.h3 Bxh3 27.Rxh3 Rad8 28.Rdh1 Rfe8 29.R1h2 Re5 30.Rxg2+ Kh8 31.Rgh2 Rde8 32.Rh1 R8e6 33.R3h2 Re8 34.Rxh6 R5e7 35.R1h5 Re2 36.Rh2 Rxf2 37.R6h3 Rff8 38.Rd3 c5 39.b4 cxb4 40.c4 b3 41.c5 bxa2+ 42.Kb2 b5 43.cxb6 a1=N 44.bxa7 Nb3 45.a8=N Nc5 46.Nc7 Na4+ 47.Kb3 Rb8+ 48.Kc2 Rf2+ 49.Kd1 Rb1+ ",
+  },
+  {name : "/g4",
+    pgnStr:" 1.d4 d5 2.e4 dxe4 3.f4 exf3 4.d5 c5 5.dxc6 fxg2 6.cxb7 gxh1=Q 7.bxa8=Q Nh6 8.Na3 e5 9.Be3 Bc5 10.Qe2 O-O 11.Bd2 Nf5 12.O-O-O Qg5 13.Nf3 Qxf3 14.Qexf3 Na6 15.Bd3 Be6 16.Bxg5 Rxa8 17.Qd5 Bxd5 "
+  },
+  {
+    name: "/3rooks",
+    pgnStr:
+      "1.Nc3 Nc6 2.Nf3 Nf6 3.Nd4 Nd5 4.Ne4 Ne5 5.Nf5 Nf4 6.e3 e6 7.Bc4 Bc5 8.Qf3 Qf6 9.d3 d6 10.Bd2 Bd7 11.O-O-O O-O 12.Nfxd6 Nfxd3+ 13.Kb1 Nf4 14.Nf5 Ned3 15.Ned6 Nd5 16.Nd4 N3f4 17.N4f5 Nd3 18.Nd4 N5f4 19.N6f5 Qxd4 20.exd4 Bxd4 21.Qxf4 Nxf4 22.Bxe6 fxe6 23.Nxd4 Nxg2 24.Nxe6 Bxe6 25.Bh6 gxh6 26.h3 Bxh3 27.Rxh3 Rad8 28.Rdh1 Rfe8 29.R1h2 Re5 30.Rxg2+ Kh8 31.Rgh2 Rde8 32.Rh1 R8e6 33.R3h2 Re8 34.Rxh6 R5e7 35.R1h5 Re2 36.Rh2 Rxf2 37.R6h3 Rff8 38.Rd3 c5 39.b4 cxb4 40.c4 b3 41.c5 bxa2+ 42.Kb2 b5 43.cxb6 a1=R 44.bxa7 Rae1 45.a8=R R8e3 46.Rad8 Rfe8 47.Rhd2 R1e2 48.R8d4 R8e4 49.Rd6 Re6 50.R3d4 Re1 51.Rd1 R3e4 52.R4d3 R4e3 53.R6d5 R6e5 54.Rc3 Rf3 55.R1d3 R5e3 56.Rb3 Rg3 57.Rdc3 Ref3 58.Rdd3 Ree3 59.Ra3 Rh3 60.Rcb3 Rfg3 61.Rdc3 Ref3 62.Rd3 Re3 63.Rbc3 Rgf3",
+  },
+  {
+    name: "/3knights",
+    pgnStr:
+      "1.b4 g5 2.b5 a5 3.bxa6 g4 4.h4 gxh3 5.axb7 hxg2 6.bxc8=N gxf1=N 7.Nb6 Ng3 8.Nc4 Nf5 9.Nc3 Nc6 10.Nf3 Nf6 11.Na4 Nd5 12.Nab2 Nf4 13.Nd3 Ne6 14.Nce5 Ned4 15.Nc4 Ne6 16.Nde5 Nfd4 17.Nd3 Nf5 18.Nfe5 Ncd4 19.Nf3 Nc6 20.c3 Ne3 21.Nfe5 Nc2+ 22.Kf1 N2d4 23.Nxd7 Nc2 24.Nce5 N6d4 25.Nxf7 Nc6 26.N7e5 N6d4 27.Nd7 Nc6 28.Nfe5 Ned4 29.Nf7 Ne6 30.N3e5 N2d4 31.Nd3 Nc2",
+  },
+];
+function runTestCases(num) {
+  let results = [];
+  runningTestCases = true;
+  for (let i = 0; i < num; i++) results.push(runOneTestCase(testCases[i]));
+}
+function runOneTestCase(gameJSON) {
+  makeStartBoard();
+  makeBoard();
+  makeRightBar();
+  pgnStr = gameJSON.pgnStr.trim();
+  showPGN();
+  testResult = { name: gameJSON.name };
+  try {
+    decodePGN();
+    isLoadingPGNPawnPromotionJSON = {};
+    makeBoard();
+  } catch (e) {
+    testResult.error = e.message;
+    testResult.stack = e.stack;
+    testResult.decode = "Error";
+    return testResult;
+  }
+  testResult.loadPGN =
+    pgnStr.trim() === gameJSON.pgnStr.trim() ? "Matched" : "Error";
+  for (let i = 0; i < 100; i++) undoMove();
+  for (let i = 0; i < 100; i++) redoMove();
+  testResult.undoRedo =
+    pgnStr.trim() === gameJSON.pgnStr.trim() ? "Matched" : "Error";
+  return testResult;
 }

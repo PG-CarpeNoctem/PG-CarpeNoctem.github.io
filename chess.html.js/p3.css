@@ -3,8 +3,13 @@ body {
   overflow-x: hidden;
   background-color: rgba(0, 0, 0, 0.9);
   color: white;
+  user-select: none;
 }
-/* Add a function allowing to upload image to set as background and then give that property to body*/
+.dragging {
+  position: absolute;
+  z-index: 3;
+  pointer-events: none; /* Disable pointer events to prevent interference */
+}
 select {
   font-family: "FontAwesome";
 }
@@ -89,7 +94,12 @@ select {
   padding-left: auto;
   padding-top: 15px;
   position: absolute;
+}
+.containerFrame-virtual-z-index-low {
   z-index: 2;
+}
+.containerFrame-virtual-pieces-z-index-high {
+  z-index: 3;
 }
 .btn-block {
   padding: 0;
@@ -114,6 +124,37 @@ select {
   color: rgba(255, 0, 0, 0.9);
   background-color: rgba(256, 256, 256, 0.2);
   border: 1px solid rgba(241, 29, 29, 0.5);
+}
+.btn-green {
+  padding: 0;
+  margin: 0;
+  background-color: rgba(256, 256, 256, 0.1);
+  color: white;
+  border: 1px solid black;
+}
+.btn-green:hover {
+  background-color: rgba(256, 256, 256, 0.2);
+  border: 1px solid darkgreen;
+  color: rgba(145, 236, 47, 0.7);
+}
+.btn-import {
+  padding: 0;
+  margin: 0;
+  background-color: rgba(256, 256, 256, 0.1);
+  color: white;
+  border: 1px solid black;
+}
+.btn-import:hover {
+  background-color: rgba(256, 256, 256, 0.2);
+  border: 1px solid darkgreen;
+  color: rgba(145, 236, 47, 0.7);
+}
+.btn-import:disabled {
+  padding: 0;
+  margin: 0;
+  background-color: rgba(256, 256, 256, 0.1);
+  color: white;
+  border: 1px solid black;
 }
 .left-bar-block {
   padding: 0;
@@ -169,18 +210,6 @@ select {
   background-color: rgba(0, 256, 256, 0.2);
   border: 2px solid darkgreen;
 }
-.btn-green {
-  padding: 0;
-  margin: 0;
-  background-color: rgba(256, 256, 256, 0.1);
-  color: white;
-  border: 1px solid black;
-}
-.btn-green:hover {
-  background-color: rgba(256, 256, 256, 0.2);
-  border: 1px solid darkgreen;
-  color: rgba(145, 236, 47, 0.7);
-}
 .cellBox {
   display: flex;
   width: 80px;
@@ -199,14 +228,14 @@ select {
 }
 .containerLeft {
   position: absolute;
-  top: 12px;
+  top: 10px;
   left: 1px;
   width: 26%;
   margin-top: 60px;
 }
 .containerRight {
   position: absolute;
-  top: 107px;
+  top: 10px;
   right: 0px;
   width: 26%;
   margin-top: 60px;
@@ -308,7 +337,7 @@ select {
 }
 .table-container {
   width: 100%;
-  max-height: 265px;
+  max-height: 292px;
   padding: 0;
   margin: 0;
   overflow-y: auto;
@@ -377,6 +406,14 @@ select {
   height: fit-content;
   border: none;
 }
+.abcd-label-height-adjustment-virtual-black-cover {
+  height: 22px;
+  border: none;
+  width: 89.1%;
+  margin-left: 6.8%;
+  border-bottom-right-radius: 10px;
+  border-bottom-left-radius: 10px;
+}
 .abcd-label-padding {
   padding-left: 60px;
 }
@@ -410,23 +447,24 @@ select {
   width: 100%;
 }
 .missing-piece-top {
-  background-color: rgba(0, 256, 256, 0.2);
+  background-color: rgba(32, 256, 256, 0.2);
   border: 1px solid rgba(0, 0, 0, 0.9);
   border-top-right-radius: 10px;
   border-top-left-radius: 10px;
   width: 100%;
 }
-.text-white {
-  text-align: center;
-  justify-content: center;
-  color: rgba(256, 256, 256, 0.8);
-  font-size: medium;
+.point-diff-font-white {
+  display: inline-block;
+  align-items: first baseline;
+  color: white;
+  font-size: 22px;
 }
-.text-black {
-  text-align: center;
-  justify-content: center;
-  color: rgba(256, 128, 128, 0.8);
-  font-size: medium;
+.point-diff-font-black {
+  display: inline-block;
+  align-items: first baseline;
+  color: rgba(10,10,10,1);
+  font-weight: bold;
+  font-size: 22px;
 }
 .dd-menu-block {
   background-color: rgba(192, 256, 256, 0.1);
@@ -442,7 +480,6 @@ select {
   background-color: rgba(192, 256, 256, 0.2);
   border: 1px solid rgba(0, 256, 256, 0.4);
 }
-
 .menu-block {
   background-color: rgba(128, 128, 128, 0.1);
   border: 1px solid rgba(0, 0, 0, 0.9);
@@ -480,9 +517,9 @@ select {
   margin-bottom: 0px;
 }
 .form-control-color-pkr {
-  border: 0.5px solid rgba(0, 0, 0, 0.9); /* Black border */
+  border: 0.5px solid rgba(0, 0, 0, 0.9);
   background-color: rgba(128, 128, 128, 0.1);
-  color: #ffffff; /* Light text color for the input */
+  color: #ffffff;
   min-height: 45px;
 }
 input[type="color"] {
@@ -624,7 +661,7 @@ input[type="range"]::-webkit-slider-thumb {
   justify-content: center;
   align-items: center;
   position: relative;
-  z-index: 2;
+  z-index: 1;
 }
 .virtualBorder-top-start {
   border-top-left-radius: 10px;
@@ -638,31 +675,28 @@ input[type="range"]::-webkit-slider-thumb {
 .virtualBorder-bottom-end {
   border-bottom-right-radius: 10px;
 }
-.gradient-circle-white {
+.gradient-circle {
   width: 80px;
   height: 80px;
   border: none;
   outline: none;
-  box-shadow: 1px #e1e1e1;
-  clip-path: circle(50%);
-  background: radial-gradient(#f6f6f6, #ececec, #e1e1e1, #d0d0d0, #cccccc);
-  background-color: rgba(0, 0, 0, 0.5);
+  clip-path: inset(0%);
+  background: rgba(0, 0, 0, 0.6);
   position: relative;
-  z-index: 2;
+  /*z-index: 2;*/
   transition: all 0.3s ease;
 }
+.gradient-circle-white {
+  box-shadow: 1px #e1e1e1;
+  clip-path: circle(50% at center);
+  background: radial-gradient(#f6f6f6, #ececec, #e1e1e1, #d0d0d0, #cccccc);
+  /*z-index: 3;*/
+}
 .gradient-circle-black {
-  width: 80px;
-  height: 80px;
-  border: none;
-  outline: none;
   box-shadow: 1px #555555;
   clip-path: circle(50% at center);
   background: radial-gradient(#aaaaaa, #888888, #666666, #444444, #222222);
-  background-color: rgba(0, 0, 0, 0.5);
-  position: relative;
-  z-index: 2;
-  transition: all 0.3s ease;
+  z-index: 3;
 }
 .gradient-circle-white:hover {
   clip-path: inset(0%);
