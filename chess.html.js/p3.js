@@ -128,7 +128,7 @@ function dataReload() {
       name: "pastel",
       clr1: "#DEE3E6",
       clr2: "#8CA2AD",
-      clr1c: "FF9999",
+      clr1c: "#FF9999",
       clr2c: "#D37878",
       clr1p: "#78BEDE",
       clr2p: "#5795B2",
