@@ -317,8 +317,9 @@ function makeCell(row, col) {
   });
   if (Object.keys(boardArr[row][col]).length != 0) {
     draggableStr =
-      (moveCount % 2 == 0 && boardArr[row][col].color === "white") ||
-      (moveCount % 2 == 1 && boardArr[row][col].color === "black")
+      ((moveCount % 2 == 0 && boardArr[row][col].color === "white") ||
+        (moveCount % 2 == 1 && boardArr[row][col].color === "black")) &&
+      !disableBoardForUser
         ? "draggable=true ondragstart='drag(event, " + row + ", " + col + ")'"
         : " draggable=false ";
     pieceStr =
@@ -682,6 +683,8 @@ function defaultFunctionSettings() {
   leftBarOpenStatus = [false, false, false];
   userNewMoveClick = false;
   previousHighlightData = {};
+  previousRightBarMoveNum = -1;
+  disableBoardForUser = false;
   if (!runningTestCases) console.clear();
 }
 
@@ -694,8 +697,8 @@ function makeLeftBar(leftBarInstance) {
   leftStr =
     "<div class = 'containerLeft'><div class='btn-group-vertical w-100' role='group'>" +
     "<div class='btn-group' role='group'>" +
-    "<button class = 'p-3 btn btn-light btn-block-red w-100 h-100' onclick = 'undoMove()'><i class='fa-solid fa-left-long'></i> Undo Move</button>" +
-    "<button class = 'p-3 btn btn-light btn-green w-100 h-100' onclick = 'redoMove()'><i class='fa-solid fa-right-long'></i> Redo Move</button></div>" +
+    "<button class = 'p-3 btn btn-light btn-block-red w-100 h-100' onclick = 'undoMoveByUser()'><i class='fa-solid fa-left-long'></i> Undo Move</button>" +
+    "<button class = 'p-3 btn btn-light btn-green w-100 h-100' onclick = 'redoMoveByUser()'><i class='fa-solid fa-right-long'></i> Redo Move</button></div>" +
     "<div class = 'height-break'></div>";
   leftStr += leftBarAllInstance
     .map(function (ele, index) {
@@ -804,20 +807,33 @@ function ddActionsNew(index1, index2) {
 function makeRightBar() {
   if (!time) return;
   let tableStr = "";
-  let rightPgnArrOriginalSize = rightPgnArr.length;
-  if (rightPgnArr.length === 1) rightPgnArr.push(" ");
-  let tableArr = rightPgnArr.map(function (ele, index) {
+  let numMoves = rightPgnArr.length - 1;
+  let rightPgnArrCopy = [...rightPgnArr];
+  if (rightPgnArr.length === 1) rightPgnArrCopy.push(" ");
+  let tableArr = rightPgnArrCopy.map(function (ele, index) {
     if (index % 2 == 0)
       return (
         "<tr><th class ='right-bar-th'>" +
         (Math.abs(index / 2) + 1) +
-        "</th><td class = 'right-bar-td right-bar-td-even' onclick='changeColorRightBarTd(this)'>" +
+        "</th><td id='rightbarMove-" +
+        index +
+        "' class = 'right-bar-td" +
+        (index === numMoves ? "-selected" : "") +
+        " right-bar-td-even' onclick='rightBarMoveNumber(" +
+        index +
+        ")'>" +
         ele +
         "</td>"
       );
     else
       return (
-        "<td class = 'right-bar-td right-bar-td-odd' onclick='changeColorRightBarTd(this)'>" +
+        "<td id='rightbarMove-" +
+        index +
+        "' class = 'right-bar-td" +
+        (index === numMoves ? "-selected" : "") +
+        " right-bar-td-odd' onclick='rightBarMoveNumber(" +
+        index +
+        ")'>" +
         ele +
         "</td></tr>"
       );
@@ -839,7 +855,7 @@ function makeRightBar() {
     tableStr +
     "<span class = 'color-line-bottom'></span><div class='btn-group-vertical w-100' role='group'><div class='btn-group' role='group'><input type='text' class='btn-name-right' id='userName' value='You' placeholder='You'><button class = 'p-3 btn btn-light btn-right w-100 h-100'>Timer</button></div><div id = 'missingPieceBlack' class='missing-piece-bottom'></div></div></div>";
 
-  if (rightPgnArr && rightPgnArrOriginalSize > 1) {
+  if (rightPgnArr && rightPgnArr.length > 1) {
     document.getElementById("showLeftBarMoves").innerHTML = tableArr.join("");
   } else document.getElementById("rightbar").innerHTML = rightStr;
   if (rightPgnArr.length != 0 && rightPgnArr.length != 1) {
@@ -847,18 +863,33 @@ function makeRightBar() {
     tableContainer.scrollTop = tableContainer.scrollHeight;
     missingPiecesUpdate();
   }
+  previousRightBarMoveNum = rightPgnArr.length - 1;
 }
-function changeColorRightBarTd(td) {
-  let clickedColor = "#88ffff";
-  let allTds = document.querySelectorAll(".right-bar-td");
-  allTds.forEach(function (element) {
-    element.style.removeProperty("color");
-  });
-  td.style.color = clickedColor;
+function rightBarMoveNumber(moveNum) {
+  let element1 = document.getElementById(
+    "rightbarMove-" + previousRightBarMoveNum
+  );
+  element1.classList.remove("right-bar-td-selected");
+  let element2 = document.getElementById("rightbarMove-" + moveNum);
+  element2.classList.add("right-bar-td-selected");
+  disableBoardForUser = true;
+  if (moveNum <= previousRightBarMoveNum) {
+    console.log("UndoMove::", previousRightBarMoveNum - moveNum);
+    for (let i = 0; i < previousRightBarMoveNum - moveNum; i++) undoMove();
+  } else if (moveNum > previousRightBarMoveNum) {
+    console.log("redoMove::", moveNum - previousRightBarMoveNum);
+    for (let i = 0; i < moveNum - previousRightBarMoveNum; i++) redoMove();
+  }
+  previousRightBarMoveNum = moveNum;
+  if (moveNum === rightPgnArr.length - 1) {
+    disableBoardForUser = false;
+    makeBoard();
+  }
 }
 
 //Board Logic
 function boardClickByUser(row, col) {
+  if (disableBoardForUser) return;
   userNewMoveClick = true;
   boardClick(row, col);
   userNewMoveClick = false;
@@ -1620,6 +1651,20 @@ function redoMove() {
   comingFromRedoMoveBool = true;
   makeBoardViaPGN(localeLastMove);
 }
+function undoMoveByUser() {
+  if (disableBoardForUser) {
+    showCustomAlert("Please go to Last Move");
+    return;
+  }
+  undoMove();
+}
+function redoMoveByUser() {
+  if (disableBoardForUser) {
+    showCustomAlert("Please go to Last Move");
+    return;
+  }
+  redoMove();
+}
 
 //Pieces Lost/ Points Update
 function pointUpdateCounter(piece, color) {
@@ -1685,6 +1730,7 @@ function pointDifference(color) {
 
 //PGN Encoder/Decoder
 function makePGN() {
+  if (disableBoardForUser) return;
   rightPgnArr = [];
   pgnStr = pgnArr.reduce(function (ans, ele) {
     let notation = "";
@@ -1737,6 +1783,7 @@ function importGame() {
   showPGN();
   decodePGN();
   isLoadingPGNPawnPromotionJSON = {};
+  showOptionsLeftDD(2, 0);
   makeBoard();
 }
 function decodePGN() {
@@ -2508,9 +2555,12 @@ function importPGNUI() {
   textarea.addEventListener("paste", adjustTextareaHeight);
 }
 function adjustTextareaHeight() {
+  let maxHeightTextAreaPGN = 318;
   const textarea = document.getElementById("moveHistory");
   textarea.style.height = "auto";
   textarea.style.height = textarea.scrollHeight + "px";
+  if (textarea.scrollHeight > maxHeightTextAreaPGN)
+    textarea.style.height = maxHeightTextAreaPGN + "px";
   let btnElement = document.getElementById("importGameBtn");
   if (textarea && textarea.value.length > 0) btnElement.disabled = false;
   else btnElement.disabled = true;
@@ -2537,29 +2587,34 @@ function backwardFastPGN() {
     showCustomAlert("Please Select Piece To Promote");
     return;
   }
-  a = 10;
+  rightBarMoveNumber(0);
+  let tableContainer = document.querySelector(".table-container");
+  tableContainer.scrollTop = 0;
 }
 function backwardStepPGN() {
   if (virtualBoardStr != "") {
     showCustomAlert("Please Select Piece To Promote");
     return;
   }
-  a = 10;
+  if (previousRightBarMoveNum > 0)
+    rightBarMoveNumber(previousRightBarMoveNum - 1);
 }
 function forwardStepPGN() {
   if (virtualBoardStr != "") {
     showCustomAlert("Please Select Piece To Promote");
     return;
   }
-  a = 10;
+  if (previousRightBarMoveNum < rightPgnArr.length - 1)
+    rightBarMoveNumber(previousRightBarMoveNum + 1);
 }
 function forwardFastPGN() {
   if (virtualBoardStr != "") {
     showCustomAlert("Please Select Piece To Promote");
     return;
   }
-
-  a = 10;
+  rightBarMoveNumber(rightPgnArr.length - 1);
+  let tableContainer = document.querySelector(".table-container");
+  tableContainer.scrollTop = tableContainer.scrollHeight;
 }
 function flipBoard() {
   if (virtualBoardStr != "") {
@@ -2706,6 +2761,7 @@ function allowDrop(event) {
   event.preventDefault();
 }
 function drag(event, row, col) {
+  if (disableBoardForUser) return;
   event.dataTransfer.effectAllowed = "move";
   event.dataTransfer.setData("text/plain", event.target.id);
   if (prevrow != -1 || prevcol != -1) {
