@@ -724,7 +724,7 @@ function makeLeftDD(ele, index1, isOpen) {
       ? "<i class='align-right-fa-icon fas fa-caret-up'></i>"
       : "") +
     "</button>" +
-    "<div class='w-100' role='group' id='dd" +
+    "<div class='left-menu-container w-100' role='group' id='dd" +
     (index1 + 1) +
     "menu'>" +
     (isOpen ? makeLeftBarDDMenu(index1) : "") +
