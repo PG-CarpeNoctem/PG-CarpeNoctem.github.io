@@ -2071,10 +2071,12 @@ function changeThemesUI() {
         (imagePath === baseImagePath + ele ? "checked" : "") +
         "><label class='btn btn-outline-light' for='rt" +
         index +
-        "'><img src = '" +
+        "'><button type='button' class='p-3 btn btn-light btn-theme-block' onclick='themeLogoChange(\"rt" +
+        index +
+        "\",true)'><i class='fa-solid fa-sliders fa-size-increase'></i></button><img src = '" +
         baseThemePath +
         ele +
-        "' width = '100' draggable=false class = 'theme-img-piece'></label>"
+        "' width = '100' draggable=false class = 'theme-img-piece'></label></input>"
       );
     })
     .join("");
@@ -2086,11 +2088,11 @@ function changeThemesUI() {
   const radioButtons = document.querySelectorAll('input[name="theme1"]');
   radioButtons.forEach((button) => {
     button.addEventListener("change", function () {
-      themeLogoChange(button.id);
+      themeLogoChange(button.id, false);
     });
   });
 }
-function themeLogoChange(id) {
+function themeLogoChange(id, localeThemeLoadBool) {
   if (virtualBoardStr != "") {
     showCustomAlert("Please Select Piece To Promote");
     return;
@@ -2112,76 +2114,78 @@ function themeLogoChange(id) {
   if (localeJson.name === "pastel") {
     imagePath = baseImagePath + pieceImagePaths[2];
   } else imagePath = baseImagePath + pieceImagePaths[0];
-  let menuStr =
-    "<div class='btn-group-vertical w-100' role='group'><div class='input-group input-group-pkr w-100'><div class='input-group-text menu-block menu-block-width-default'>Color 1:</div><input type='color' class='form-control form-control-color-pkr' id='colorPicker1' value='" +
-    localeJson.clr1 +
-    "'></input></div><div class='input-group input-group-pkr w-100'><div class='input-group-text menu-block  menu-block-width-default'>Color 2:</div><input type='color' class='form-control form-control-color-pkr' id='colorPicker2' value='" +
-    localeJson.clr2 +
-    "'></input></div></div><div class='btn-group-vertical w-100' role='group'><div class='input-group input-group-pkr w-100'><div class='input-group-text menu-block  menu-block-check-width-default'>Check Color 1:</div><input type='color' class='form-control form-control-color-pkr' id='colorPicker5' value='" +
-    localeJson.clr1c +
-    "'></input></div><div class='input-group input-group-pkr w-100'><div class='input-group-text menu-block  menu-block-check-width-default'>Check Color 2:</div><input type='color' class='form-control form-control-color-pkr' id='colorPicker6' value='" +
-    localeJson.clr2c +
-    "'></input></div></div><div class='btn-group-vertical w-100' role='group'><div class='input-group input-group-pkr w-100'><div class='input-group-text menu-block  menu-block-previous-width-default'>Previous Color 1:</div><input type='color' class='form-control form-control-color-pkr' id='colorPicker7' value='" +
-    localeJson.clr1p +
-    "'></input></div><div class='input-group input-group-pkr w-100'><div class='input-group-text menu-block  menu-block-previous-width-default'>Previous Color 2:</div><input type='color' class='form-control form-control-color-pkr' id='colorPicker8' value='" +
-    localeJson.clr2p +
-    "'></input></div></div><div class='btn-group-vertical w-100' role='group'><div class='input-group input-group-pkr w-100'><div class='input-group-text menu-block  menu-block-highlight-width-default'>Highlighted Color 1:</div><input type='color' class='form-control form-control-color-pkr' id='colorPicker3' value='" +
-    localeJson.clr1x +
-    "')></input></div><div class='input-group input-group-pkr w-100'><div class='input-group-text menu-block  menu-block-highlight-width-default'>Highlighted Color 2:</div><input type='color' class='form-control form-control-color-pkr' id='colorPicker4' value='" +
-    localeJson.clr2x +
-    "'></input></div><div class='btn-group-vertical w-100' role='group'><div class='input-group input-group-pkr w-100'><div class='form-check form-switch menu-block w-100'><label class='form-check-label' for='colRowSwitch'> Column & Row :</label><input class='form-check-input' type='checkbox' role='switch' id='colRowSwitch' checked></div></div></div></div>";
-  document.getElementById("dd1menu").innerHTML = menuStr;
+  if (localeThemeLoadBool) {
+    let menuStr =
+      "<div class='btn-group-vertical w-100' role='group'><div class='input-group input-group-pkr w-100'><div class='input-group-text menu-block menu-block-width-default'>Color 1:</div><input type='color' class='form-control form-control-color-pkr' id='colorPicker1' value='" +
+      localeJson.clr1 +
+      "'></input></div><div class='input-group input-group-pkr w-100'><div class='input-group-text menu-block  menu-block-width-default'>Color 2:</div><input type='color' class='form-control form-control-color-pkr' id='colorPicker2' value='" +
+      localeJson.clr2 +
+      "'></input></div></div><div class='btn-group-vertical w-100' role='group'><div class='input-group input-group-pkr w-100'><div class='input-group-text menu-block  menu-block-check-width-default'>Check Color 1:</div><input type='color' class='form-control form-control-color-pkr' id='colorPicker5' value='" +
+      localeJson.clr1c +
+      "'></input></div><div class='input-group input-group-pkr w-100'><div class='input-group-text menu-block  menu-block-check-width-default'>Check Color 2:</div><input type='color' class='form-control form-control-color-pkr' id='colorPicker6' value='" +
+      localeJson.clr2c +
+      "'></input></div></div><div class='btn-group-vertical w-100' role='group'><div class='input-group input-group-pkr w-100'><div class='input-group-text menu-block  menu-block-previous-width-default'>Previous Color 1:</div><input type='color' class='form-control form-control-color-pkr' id='colorPicker7' value='" +
+      localeJson.clr1p +
+      "'></input></div><div class='input-group input-group-pkr w-100'><div class='input-group-text menu-block  menu-block-previous-width-default'>Previous Color 2:</div><input type='color' class='form-control form-control-color-pkr' id='colorPicker8' value='" +
+      localeJson.clr2p +
+      "'></input></div></div><div class='btn-group-vertical w-100' role='group'><div class='input-group input-group-pkr w-100'><div class='input-group-text menu-block  menu-block-highlight-width-default'>Highlighted Color 1:</div><input type='color' class='form-control form-control-color-pkr' id='colorPicker3' value='" +
+      localeJson.clr1x +
+      "')></input></div><div class='input-group input-group-pkr w-100'><div class='input-group-text menu-block  menu-block-highlight-width-default'>Highlighted Color 2:</div><input type='color' class='form-control form-control-color-pkr' id='colorPicker4' value='" +
+      localeJson.clr2x +
+      "'></input></div><div class='btn-group-vertical w-100' role='group'><div class='input-group input-group-pkr w-100'><div class='form-check form-switch menu-block w-100'><label class='form-check-label' for='colRowSwitch'> Column & Row :</label><input class='form-check-input' type='checkbox' role='switch' id='colRowSwitch' checked></div></div></div></div>";
+    document.getElementById("dd1menu").innerHTML = menuStr;
+    const colorPicker1 = document.getElementById("colorPicker1");
+    const colorPicker2 = document.getElementById("colorPicker2");
+    const colorPicker3 = document.getElementById("colorPicker3");
+    const colorPicker4 = document.getElementById("colorPicker4");
+    const colorPicker5 = document.getElementById("colorPicker5");
+    const colorPicker6 = document.getElementById("colorPicker6");
+    const colorPicker7 = document.getElementById("colorPicker7");
+    const colorPicker8 = document.getElementById("colorPicker8");
+    colorPicker1.addEventListener("input", () => colorChanged(1));
+    colorPicker2.addEventListener("input", () => colorChanged(2));
+    colorPicker3.addEventListener("input", () => colorChanged(3));
+    colorPicker4.addEventListener("input", () => colorChanged(4));
+    colorPicker5.addEventListener("input", () => colorChanged(5));
+    colorPicker6.addEventListener("input", () => colorChanged(6));
+    colorPicker7.addEventListener("input", () => colorChanged(7));
+    colorPicker8.addEventListener("input", () => colorChanged(8));
+    colorPicker1.addEventListener("focus", updateBoxShadow);
+    colorPicker1.addEventListener("blur", resetBoxShadow);
+    colorPicker1.addEventListener("input", updateBoxShadow);
+    colorPicker2.addEventListener("focus", updateBoxShadow);
+    colorPicker2.addEventListener("blur", resetBoxShadow);
+    colorPicker2.addEventListener("input", updateBoxShadow);
+    colorPicker3.addEventListener("focus", updateBoxShadow);
+    colorPicker3.addEventListener("blur", resetBoxShadow);
+    colorPicker3.addEventListener("input", updateBoxShadow);
+    colorPicker4.addEventListener("focus", updateBoxShadow);
+    colorPicker4.addEventListener("blur", resetBoxShadow);
+    colorPicker4.addEventListener("input", updateBoxShadow);
+    colorPicker5.addEventListener("focus", updateBoxShadow);
+    colorPicker5.addEventListener("blur", resetBoxShadow);
+    colorPicker5.addEventListener("input", updateBoxShadow);
+    colorPicker6.addEventListener("focus", updateBoxShadow);
+    colorPicker6.addEventListener("blur", resetBoxShadow);
+    colorPicker6.addEventListener("input", updateBoxShadow);
+    colorPicker7.addEventListener("focus", updateBoxShadow);
+    colorPicker7.addEventListener("blur", resetBoxShadow);
+    colorPicker7.addEventListener("input", updateBoxShadow);
+    colorPicker8.addEventListener("focus", updateBoxShadow);
+    colorPicker8.addEventListener("blur", resetBoxShadow);
+    colorPicker8.addEventListener("input", updateBoxShadow);
+    const colRowInput = document.getElementById("colRowSwitch");
+    colRowInput.addEventListener("change", function () {
+      if (this.checked) {
+        colRowBool = true;
+      } else {
+        colRowBool = false;
+      }
+      makeBoard();
+    });
+  }
   makeBoard();
   makeRightBar();
-  const colorPicker1 = document.getElementById("colorPicker1");
-  const colorPicker2 = document.getElementById("colorPicker2");
-  const colorPicker3 = document.getElementById("colorPicker3");
-  const colorPicker4 = document.getElementById("colorPicker4");
-  const colorPicker5 = document.getElementById("colorPicker5");
-  const colorPicker6 = document.getElementById("colorPicker6");
-  const colorPicker7 = document.getElementById("colorPicker7");
-  const colorPicker8 = document.getElementById("colorPicker8");
-  colorPicker1.addEventListener("input", () => colorChanged(1));
-  colorPicker2.addEventListener("input", () => colorChanged(2));
-  colorPicker3.addEventListener("input", () => colorChanged(3));
-  colorPicker4.addEventListener("input", () => colorChanged(4));
-  colorPicker5.addEventListener("input", () => colorChanged(5));
-  colorPicker6.addEventListener("input", () => colorChanged(6));
-  colorPicker7.addEventListener("input", () => colorChanged(7));
-  colorPicker8.addEventListener("input", () => colorChanged(8));
-  colorPicker1.addEventListener("focus", updateBoxShadow);
-  colorPicker1.addEventListener("blur", resetBoxShadow);
-  colorPicker1.addEventListener("input", updateBoxShadow);
-  colorPicker2.addEventListener("focus", updateBoxShadow);
-  colorPicker2.addEventListener("blur", resetBoxShadow);
-  colorPicker2.addEventListener("input", updateBoxShadow);
-  colorPicker3.addEventListener("focus", updateBoxShadow);
-  colorPicker3.addEventListener("blur", resetBoxShadow);
-  colorPicker3.addEventListener("input", updateBoxShadow);
-  colorPicker4.addEventListener("focus", updateBoxShadow);
-  colorPicker4.addEventListener("blur", resetBoxShadow);
-  colorPicker4.addEventListener("input", updateBoxShadow);
-  colorPicker5.addEventListener("focus", updateBoxShadow);
-  colorPicker5.addEventListener("blur", resetBoxShadow);
-  colorPicker5.addEventListener("input", updateBoxShadow);
-  colorPicker6.addEventListener("focus", updateBoxShadow);
-  colorPicker6.addEventListener("blur", resetBoxShadow);
-  colorPicker6.addEventListener("input", updateBoxShadow);
-  colorPicker7.addEventListener("focus", updateBoxShadow);
-  colorPicker7.addEventListener("blur", resetBoxShadow);
-  colorPicker7.addEventListener("input", updateBoxShadow);
-  colorPicker8.addEventListener("focus", updateBoxShadow);
-  colorPicker8.addEventListener("blur", resetBoxShadow);
-  colorPicker8.addEventListener("input", updateBoxShadow);
-  const colRowInput = document.getElementById("colRowSwitch");
-  colRowInput.addEventListener("change", function () {
-    if (this.checked) {
-      colRowBool = true;
-    } else {
-      colRowBool = false;
-    }
-    makeBoard();
-  });
 }
 function changeBoardColorUI() {
   let menuStr =

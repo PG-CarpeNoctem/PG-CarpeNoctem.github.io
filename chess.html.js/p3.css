@@ -549,33 +549,54 @@ input[type="color"]:disabled {
   border-radius: 5px;
 }
 .theme-img-piece {
-  width: 100%;
-  object-fit: cover;
+  width: 70%;
+  object-fit: contain;
   margin: none;
-  border-radius: 5px;
+}
+.btn-theme-block {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0;
+  margin: 0;
+  height: 75px;
+  width: 100%;
+  border: transparent;
+  background-color: transparent;
+  color: white;
+}
+.btn-theme-block:hover {
+  color: #ccffff;
+  border: transparent;
+  background-color: transparent;
+}
+.btn-outline-light {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px;
+  height: 100%;
+}
+.fa-size-increase {
+  transform: scale(3, 3);
+  font-weight: lighter;
 }
 .height-break {
   display: block;
   height: 1px;
 }
 .btn-group-horizontal .btn-check:checked + .btn {
-  background-color: rgba(
-    0,
-    256,
-    256,
-    0.1
-  ); /* Change to your preferred active color */
-  border-color: rgba(
-    0,
-    256,
-    256,
-    0.5
-  ); /* Change to your preferred active border color */
+  background-color: rgba(0, 256, 256, 0.2);
+  border-color: rgba(0, 256, 256, 0.5);
 }
 .btn-group-horizontal .btn {
-  display: flex; /* Use flexbox to align items within the button */
-  align-items: center; /* Center items vertically */
-  justify-content: center; /* Center items horizontally */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.btn-group-horizontal .btn:hover {
+  background-color: rgba(0, 256, 256, 0.1);
+  border-color: rgba(0, 256, 256, 0.2);
 }
 .possible-move-square {
   position: absolute;
