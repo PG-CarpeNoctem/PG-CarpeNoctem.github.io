@@ -181,6 +181,14 @@ function dataReload() {
       { txt: "Import PGN", icon: "fa-file-import" },
     ],
   ];
+  leftBarArrAll = [
+    { txt: "Board Settings", icon: "fa-chess-board fa-size-increase" },
+    {
+      txt: "Move Settings",
+      icon: "fa-arrows-up-down-left-right fa-size-increase",
+    },
+    { txt: "Game Settings", icon: "fa-book fa-size-increase" },
+  ];
   leftBarOpenStatus = [false, false, false];
   userNewMoveClick = false;
   previousHighlightData = {};
@@ -671,11 +679,6 @@ function defaultFunctionSettings() {
     pawnPromotedto: "",
     castleDisable: -1,
   };
-  leftBarArrAll = [
-    { txt: "Board Settings", icon: "fa-chess-board" },
-    { txt: "Move Settings", icon: "fa-arrows-up-down-left-right" },
-    { txt: "Game Settings", icon: "fa-book" },
-  ];
   leftBarOpenStatus = [false, false, false];
   userNewMoveClick = false;
   previousHighlightData = {};
@@ -2073,10 +2076,10 @@ function changeThemesUI() {
         index +
         "'><button type='button' class='p-3 btn btn-light btn-theme-block' onclick='themeLogoChange(\"rt" +
         index +
-        "\",true)'><i class='fa-solid fa-sliders fa-size-increase'></i></button><img src = '" +
+        "\",true)'><i class='bi bi-sliders2 scale-sliders-icon'></i></button><img src = '" +
         baseThemePath +
         ele +
-        "' width = '100' draggable=false class = 'theme-img-piece'></label></input>"
+        "' width = '100' draggable=false class = 'theme-img-piece'></label></input><div class='height-break'></div>"
       );
     })
     .join("");
@@ -2091,6 +2094,9 @@ function changeThemesUI() {
       themeLogoChange(button.id, false);
     });
   });
+}
+{
+  /* <svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='currentColor' class='bi bi-sliders2' viewBox='0 0 16 16'><path fill-rule='evenodd' d='M10.5 1a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-1 0V4H1.5a.5.5 0 0 1 0-1H10V1.5a.5.5 0 0 1 .5-.5M12 3.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5m-6.5 2A.5.5 0 0 1 6 6v1.5h8.5a.5.5 0 0 1 0 1H6V10a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5M1 8a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2A.5.5 0 0 1 1 8m9.5 2a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-1 0V13H1.5a.5.5 0 0 1 0-1H10v-1.5a.5.5 0 0 1 .5-.5m1.5 2.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5'/></svg> */
 }
 function themeLogoChange(id, localeThemeLoadBool) {
   if (virtualBoardStr != "") {
@@ -2309,7 +2315,7 @@ function changePieceType() {
         baseImagePath +
         ele +
         pieceImageArr[0] +
-        "' draggable=false class = 'radio-img-piece'></label>"
+        "' draggable=false class = 'radio-img-piece'></label></input><div class='height-break'></div>"
       );
     })
     .join("");

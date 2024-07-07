@@ -600,7 +600,15 @@ input[type="color"]:disabled {
   height: 100%;
 }
 .fa-size-increase {
-  transform: scale(3, 3);
+  transform: scale(1.5);
+}
+.scale-sliders-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+  transform: scale(4);
 }
 .height-break {
   display: block;
