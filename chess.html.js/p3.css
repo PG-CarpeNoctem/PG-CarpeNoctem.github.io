@@ -1,15 +1,23 @@
+.draggable-element[draggable="true"] {
+  cursor: grab;
+}
+.draggable-element[draggable="false"] {
+  cursor: pointer;
+}
+.draggable-element:active[draggable="true"] {
+  cursor: grabbing;
+}
+.draggable {
+  cursor: grab;
+}
+
+/*Main CSS*/
 body {
   overflow-y: hidden;
   overflow-x: hidden;
   background-color: rgba(0, 0, 0, 0.9);
   color: white;
   user-select: none;
-  /* cursor:pointer; */
-}
-.dragging {
-  position: absolute;
-  z-index: 3;
-  pointer-events: none;
   cursor: pointer;
 }
 select {

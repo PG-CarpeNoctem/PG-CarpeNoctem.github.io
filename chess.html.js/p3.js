@@ -320,7 +320,11 @@ function makeCell(row, col) {
       ((moveCount % 2 == 0 && boardArr[row][col].color === "white") ||
         (moveCount % 2 == 1 && boardArr[row][col].color === "black")) &&
       !disableBoardForUser
-        ? "draggable=true ondragstart='drag(event, " + row + ", " + col + ")'"
+        ? "draggable=true ondragstart='drag(event, " +
+          row +
+          ", " +
+          col +
+          ")' ondragend='dragEnd(event)'"
         : " draggable=false ";
     pieceStr =
       "<img src='" +
@@ -336,7 +340,7 @@ function makeCell(row, col) {
       row +
       "," +
       col +
-      ")'>";
+      ")' class='draggable-element'>";
   }
   if (num != -1 && legalBool)
     if (Object.keys(boardArr[row][col]).length != 0)
@@ -400,7 +404,9 @@ function makeCell(row, col) {
   }
   return (
     labelStr +
-    "<div class='cellBox cellBorder" +
+    "<div class='" +
+    (pieceStr && moveStartConditon(row, col) ? "draggable " : "") +
+    "cellBox cellBorder" +
     extraInfoStr +
     "' id='cell-" +
     row +
@@ -1783,6 +1789,7 @@ function importGame() {
   showPGN();
   decodePGN();
   isLoadingPGNPawnPromotionJSON = {};
+  leftBarOpenStatus[2] = true;
   showOptionsLeftDD(2, 0);
   makeBoard();
 }
@@ -2764,6 +2771,7 @@ function drag(event, row, col) {
   if (disableBoardForUser) return;
   event.dataTransfer.effectAllowed = "move";
   event.dataTransfer.setData("text/plain", event.target.id);
+  document.body.style.cursor = "grabbing";
   if (prevrow != -1 || prevcol != -1) {
     previousHighlightData = {
       prevrow: prevrow,
@@ -2778,6 +2786,7 @@ function drag(event, row, col) {
 }
 function drop(event, row, col) {
   event.preventDefault();
+  document.body.style.cursor = "grab";
   let num = showMovesArr.findIndex(function (ele) {
     return ele.row === row && ele.col === col;
   });
@@ -2795,6 +2804,9 @@ function updateBoardState(fromSquareRowCol, toSquareRowCol) {
 
   boardArr[toRow][toCol] = boardArr[fromRow][fromCol];
   boardArr[fromRow][fromCol] = {};
+}
+function dragEnd(event) {
+  document.body.style.cursor = "grab";
 }
 
 //Computer
