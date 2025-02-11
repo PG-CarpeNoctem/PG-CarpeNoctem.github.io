@@ -321,7 +321,7 @@ function goToSite(index) {
   } else if (index === 2) {
     window.location.href = "../employeeSystem.html.js/p2.html";
   } else if (index === 3) {
-    window.location.href = "../PG.Web Basics/index.html";
+    window.location.href = "../PG.Web_Basics/index.html";
   } else if (index === 4) {
     window.location.href = "../chess.html.js/p3.html#";
   } else if (index === 5) {
