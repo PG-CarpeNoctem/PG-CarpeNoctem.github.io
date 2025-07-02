@@ -14,6 +14,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 //Data
 dataReload();
+timerData = [];
 function dataReload() {
   clrRed = "#ff0000";
   clrYellow = "#ffff00";
@@ -27,6 +28,13 @@ function dataReload() {
     blendColors("#ffffff", clrYellow, 0.5),
     blendColors("#33b3a6", clrYellow, 0.5),
   ];
+  tabName = "";
+  flagComp = { comp: false, color: "white" };
+  stockLvl = 4;
+  oppNameValue = "Opponent";
+  oppDisableStr = " ";
+  originTabIndex = null;
+  undoCompBool = true;
   popUpCount = 0;
   time = "";
   navIconArr = [
@@ -56,18 +64,18 @@ function dataReload() {
     blackking: 1,
   };
   timeArr = [
-    "1 min",
-    "1|1",
-    "2|1",
-    "3 min",
-    "3|2",
-    "5 min",
-    "10 min",
-    "15|10",
-    "30 min",
-    "1 day",
-    "3 days",
-    "7 days",
+    {display:"1 min",total:60,incr:0},
+    {display:"1|1",total:60,incr:1},
+    {display:"2|1",total:120,incr:1},
+    {display:"3 min",total:180,incr:0},
+    {display:"3|2",total:180,incr:2},
+    {display:"5 min",total:300,incr:0},
+    {display:"10 min",total:600,incr:0},
+    {display:"15|10",total:900,incr:10},
+    {display:"30 min",total:1800,incr:0},
+    {display:"1 day",total:7200,incr:0},
+    {display:"3 days",total:7200,incr:0},
+    {display:"7 days",total:7200,incr:0},
   ];
   iconTimeArr = [
     "<div class='icon-label1'><i class='fa-solid fa-joint icon' style='color:#DAA520'></i>",
@@ -202,6 +210,7 @@ function routineFunctionCalls() {
   makeDefaultUISettings1();
   makeDefaultUISettings2();
   createNavbar();
+  navActions(0);
 }
 
 //Basic UI
@@ -235,8 +244,13 @@ function createNavbar() {
   });
 }
 function navActions(index) {
+  document
+    .querySelectorAll(".navbar-nav .nav-link")
+    .forEach((n) => n.classList.remove("active"));
+  document.getElementById("Navbar" + index).classList.add("active");
   makeLeftBar();
   makeRightBar();
+  tabName = navArr[index];
   if (index == 0) {
     time = "";
     document.getElementById("leftbar").innerHTML = "";
@@ -247,18 +261,32 @@ function navActions(index) {
       document.getElementById("leftbar").innerHTML = "";
       document.getElementById("rightbar").innerHTML = "";
     }
+    flagComp.comp = false;
+    oppNameValue = "Opponent";
+    oppDisableStr = " ";
     makeStartBoard();
     makeBoard();
+    timerData = [];
     makeRightBar();
     if (popUpCount === 0 && time != "") showPopup("Load New Theme?");
     popUpCount++;
-  } else {
+  } else if (index == 2) {
     if (time === "") {
       document.getElementById("leftbar").innerHTML = "";
       document.getElementById("rightbar").innerHTML = "";
     }
-    switchNavTab_LoadGame();
     showCustomAlert("Under Maintenance");
+  } else if (index == 3) {
+    if (time === "") {
+      document.getElementById("leftbar").innerHTML = "";
+      document.getElementById("rightbar").innerHTML = "";
+    }
+    flagComp.comp = true;
+    flagComp.color = "white";
+    makeStartBoard();
+    makeBoard();
+    makeRightBar();
+    if (time != "") showStrengthPopup();
   }
 }
 function makeTimer() {
@@ -279,7 +307,7 @@ function makeTimer() {
       "<div class='col p-0 mb-2 mx-1 bg-transparent '><button type='button' class='p-3 btn btn-light btn-block w-100 h-100' onclick = btnTimeActions(" +
       index +
       ")>" +
-      ele +
+      ele.display +
       "</button></div>"
     );
   });
@@ -295,10 +323,14 @@ function btnTimeActions(index) {
   index1 = Math.floor(index / 3);
   iconStr = iconTimeArr[index1];
   iconStr = iconStr.replace("'><i class", " justify-content-center'><i class");
-  timeStr = iconStr + time + "</div>";
+  timeStr = iconStr + time.display + "</div>";
   document.getElementById("timeLimit").innerHTML = timeStr;
-  str =
-    "<br><button type='button' class='p-3 btn btn-light btn-block w-100 h-100 btn-confirm' onclick = switchNavTab_LoadGame()>Play Game</button>";
+  if (tabName === "Computer")
+    str =
+      "<br><button type='button' class='p-3 btn btn-light btn-block w-100 h-100 btn-confirm' onclick = switchNavTab_LoadComputer()>Play Game</button>";
+  else
+    str =
+      "<br><button type='button' class='p-3 btn btn-light btn-block w-100 h-100 btn-confirm' onclick = switchNavTab_LoadGame()>Play Game</button>";
   document.getElementById("info").innerHTML = str;
 }
 function makeCell(row, col) {
@@ -547,7 +579,14 @@ function confirmedTime() {
   ) {
     showCustomAlert("Please Select Time");
   } else {
-    switchNavTab_LoadGame();
+    if (originTabIndex !== null && originTabIndex >= 0) {
+      setActiveTab("Navbar" + originTabIndex);
+      navActions(originTabIndex);
+      originTabIndex = null;
+    } else {
+      // fallback to New Game
+      switchNavTab_LoadGame();
+    }
   }
 }
 function makeStartBoard() {
@@ -856,10 +895,16 @@ function makeRightBar() {
       tableArr.join("") +
       "</table></div>";
   }
+  let timerWhite = calcTimeLeft("white");
+  let timerBlack = calcTimeLeft("black");
   let rightStr =
-    "<div class = 'containerRight'><div id = 'missingPieceWhite' class='missing-piece-top'></div><div class='btn-group-vertical w-100' role='group'><div class='btn-group' role='group'><input type='text' class='btn-name-right' id='opponentName' value='Opponent' placeholder='Opponent'><button class = 'p-3 btn btn-light btn-right w-100 h-100'>Timer</button></div><span class = 'color-line-top'></span>" +
+    "<div class = 'containerRight'><div id = 'missingPieceWhite' class='missing-piece-top'></div><div class='btn-group-vertical w-100' role='group'><div class='btn-group' role='group'><input type='text' class='btn-name-right' id='opponentName' value='" +
+    oppNameValue +
+    "' " +
+    oppDisableStr +
+    " placeholder='Opponent'><button class = 'p-3 btn btn-light btn-right w-100 h-100' id='timerWhite' >"+timerWhite+"</button></div><span class = 'color-line-top'></span>" +
     tableStr +
-    "<span class = 'color-line-bottom'></span><div class='btn-group-vertical w-100' role='group'><div class='btn-group' role='group'><input type='text' class='btn-name-right' id='userName' value='You' placeholder='You'><button class = 'p-3 btn btn-light btn-right w-100 h-100'>Timer</button></div><div id = 'missingPieceBlack' class='missing-piece-bottom'></div></div></div>";
+    "<span class = 'color-line-bottom'></span><div class='btn-group-vertical w-100' role='group'><div class='btn-group' role='group'><input type='text' class='btn-name-right' id='userName' value='You' placeholder='You'><button class = 'p-3 btn btn-light btn-right w-100 h-100' id='timerBlack' >"+timerBlack+"</button></div><div id = 'missingPieceBlack' class='missing-piece-bottom'></div></div></div>";
 
   if (rightPgnArr && rightPgnArr.length > 1) {
     document.getElementById("showLeftBarMoves").innerHTML = tableArr.join("");
@@ -893,12 +938,113 @@ function rightBarMoveNumber(moveNum) {
   }
 }
 
+//Timer data
+function timerDataFn(isMoveStart) {
+  if (isMoveStart && timerData.length===moveCount){
+    timerData.push(Date.now());
+  }
+  else if (!isMoveStart && timerData.length===moveCount){
+    timerData.push(Date.now());
+  }
+  if (isMoveStart && timerData.length===1)
+    startTimerTicking(updateTimerDisplays,500);
+}
+
+function startTimerTicking(updateDisplayFn,timeSlice) {
+  const timerTicker = setInterval(() => {
+    updateDisplayFn();
+  }, timeSlice);
+  return timerTicker;
+}
+function calcTimeLeft(color){
+  colorNum = color==="white" ? 0 : 1;
+  totalTime = 0;
+  if (colorNum===0)
+    totalTime = time.total + time.incr*(moveCount%2===0 ? moveCount/2 : (moveCount+1)/2);
+  else
+    totalTime = time.total + time.incr*(moveCount%2===0 ? moveCount/2 : (moveCount-1)/2);
+  timeUsedArr = [];
+  for (let i=1;i<timerData.length;i++){
+    timeUsedArr.push(timerData[i]-timerData[i-1]);
+  }
+  timeUsed = 0;
+  for (let i=colorNum;i<timeUsedArr.length;i=i+2)
+    timeUsed+=timeUsedArr[i];
+  currMoveTime = timerData.length>0 ? Date.now()-timerData[timerData.length-1] : 0;
+  if (moveCount%2===colorNum)
+    timeUsed = timeUsed + currMoveTime;
+  timeUsed = timeUsed/1000;
+  timeLeft = Math.trunc(totalTime-timeUsed);
+  timeLeftMins = Math.trunc(timeLeft/60);
+  timeLeftSecs = timeLeft-60*timeLeftMins;
+  timeLeftStr = ""+timeLeftMins+":"+(timeLeftSecs>9 ? timeLeftSecs : "0"+timeLeftSecs);
+  return timeLeftStr;
+}
+function updateTimerDisplays(){
+  timerWhite = calcTimeLeft("white");
+  timerBlack = calcTimeLeft("black");
+  document.getElementById("timerWhite").innerHTML = timerWhite;
+  document.getElementById("timerBlack").innerHTML = timerBlack;
+}
+
+//Game over check
+function checkGameOver(){
+  if (prevrow !== -1 && prevcol !== -1)
+    return;
+  makePGN();
+  let isGameOver = true;
+  pgnStr = pgnStr.trim();
+  if (pgnStr[pgnStr.length-1]==='+'){
+    console.log("Check");
+    for (let row=0;row<8;row++){
+      for (let col=0;col<8;col++){
+        prevrow = row;
+        prevcol = col;
+        showValidMoves();
+        inCheckCondition(boardArr[row][col].color);
+        //console.log("showMovesArr:::",showMovesArr);
+        if (showMovesArr.length>0){
+          console.log("Found a move:::",row,col,showMovesArr);
+          isGameOver = false;
+          break;
+        }
+      }
+      if (!isGameOver)
+        break;
+    }
+    console.log("isGameOver:::",isGameOver);
+    if (isGameOver)
+      alert("Game is Over");
+  }
+  prevrow = -1;
+  prevcol = -1;
+}
+
 //Board Logic
-function boardClickByUser(row, col) {
+async function boardClickByUser(row, col) {
   if (disableBoardForUser) return;
   userNewMoveClick = true;
+  timerDataFn(true);
   boardClick(row, col);
   userNewMoveClick = false;
+  let color = moveCount % 2 == 0 ? "white" : "black";
+  console.log(color, moveCount);
+  let compMove = "";
+  if (color == flagComp.color && flagComp.comp) {
+    currFen = convert2Fen(pgnStr).pop();
+    compMove = await getBestMove(currFen);
+    compRow = "8".charCodeAt(0) - compMove.charCodeAt(1);
+    compCol = compMove.charCodeAt(0) - "a".charCodeAt(0);
+    boardClick(compRow, compCol);
+    setTimeout(() => {}, 100);
+    compRow = "8".charCodeAt(0) - compMove.charCodeAt(3);
+    compCol = compMove.charCodeAt(2) - "a".charCodeAt(0);
+    boardClick(compRow, compCol);
+    undoCompBool = true;
+  }
+  console.log(compMove);
+  timerDataFn(false);
+  checkGameOver();
 }
 function boardClick(row, col) {
   //console.log(prevrow, prevcol, row, col);
@@ -1643,6 +1789,10 @@ function undoMove() {
   highlightPieceBool = false;
   makeBoard();
   highlightPieceBool = true;
+  if (flagComp.comp && undoCompBool) {
+    undoCompBool = false;
+    undoMove();
+  }
 }
 function redoMove() {
   if (virtualBoardStr != "") {
@@ -2640,6 +2790,67 @@ function flipBoard() {
   makeBoard();
 }
 
+//PGN to FEN
+function convert2Fen(pgn) {
+  let moves = pgn2Arr(pgn);
+  let startFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+  let fens = [];
+  fens.push(startFen);
+  for (let i = 0; i < moves.length; i++) {
+    const chess = new Chess(fens[i]);
+    fens.push(addMove2Fen(chess, fens[i], moves[i]));
+  }
+  console.log(fens);
+  return fens;
+}
+function pgn2Arr(pgn) {
+  let moves = [];
+  let token = "";
+  for (let i = 0; i < pgn.length; i++) {
+    let char = pgn[i];
+    if (char === " ") {
+      if (token.length > 0) moves.push(token);
+      token = "";
+    } else if (char === ".") token = "";
+    else token += char;
+  }
+  if (token.length > 0) moves.push(token);
+  return moves;
+}
+function addMove2Fen(chess, fen, move) {
+  const result = chess.move(move, { sloppy: true });
+  if (result) {
+    let newFen = chess.fen();
+    return newFen;
+  } else {
+    return "Invalid move!";
+  }
+}
+
+//StockFish API Calls
+async function callStockAPI(fen, depth = stockLvl) {
+  const url = `https://stockfish.online/api/s/v2.php?fen=${encodeURIComponent(
+    fen
+  )}&depth=${depth}`;
+  try {
+    const response = await fetch(url);
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error fetching Stockfish API:", error);
+    return null;
+  }
+}
+async function getBestMove(fen) {
+  const data = await callStockAPI(fen);
+  if (data && data.success) {
+    let bestmove = data.bestmove;
+    return bestmove.slice("bestmove ".length, "bestmove ".length + 4);
+  } else {
+    console.error("Invalid response from Stockfish API:", data);
+    return null;
+  }
+}
 //UI Building
 function makeDefaultColors() {
   clr1 = clrDefaultArr[0];
@@ -2706,39 +2917,32 @@ function updateBoxShadow() {
 function resetBoxShadow() {
   this.style.boxShadow = "none";
 }
-function switchNavTab_MakeTimer() {
+// Function to set a specific tab as active
+function setActiveTab(tabId) {
   // Get all the nav-links within the navbar
   const navLinks = document.querySelectorAll(".navbar-nav .nav-link");
-
-  // Function to set a specific tab as active
-  function setActiveTab(tabId) {
-    // Remove 'active' class from all nav-links
-    navLinks.forEach((link) => link.classList.remove("active"));
-
-    // Find the nav-link with the id matching the specified tabId and add 'active' class
-    const targetLink = document.getElementById(tabId);
-    if (targetLink) {
-      targetLink.classList.add("active");
-    }
+  // Remove 'active' class from all nav-links
+  navLinks.forEach((link) => link.classList.remove("active"));
+  // Find the nav-link with the id matching the specified tabId and add 'active' class
+  const targetLink = document.getElementById(tabId);
+  if (targetLink) {
+    targetLink.classList.add("active");
+  }
+}
+function switchNavTab_MakeTimer() {
+  if (originTabIndex === null) {
+    originTabIndex = navArr.indexOf(tabName);
   }
   setActiveTab("Navbar0");
   navActions(0);
 }
 function switchNavTab_LoadGame() {
-  // Get all the nav-links within the navbar
-  const navLinks = document.querySelectorAll(".navbar-nav .nav-link");
-  // Function to set a specific tab as active
-  function setActiveTab(tabId) {
-    // Remove 'active' class from all nav-links
-    navLinks.forEach((link) => link.classList.remove("active"));
-    // Find the nav-link with the id matching the specified tabId and add 'active' class
-    const targetLink = document.getElementById(tabId);
-    if (targetLink) {
-      targetLink.classList.add("active");
-    }
-  }
   setActiveTab("Navbar1");
   navActions(1);
+}
+function switchNavTab_LoadComputer() {
+  setActiveTab("Navbar3");
+  navActions(3);
 }
 function showPopup(message) {
   const popupOverlay = document.getElementById("popupOverlay");
@@ -2753,6 +2957,74 @@ function hidePopup() {
   const popup = document.getElementById("customPopup");
   popupOverlay.classList.remove("visible");
   popup.classList.remove("visible");
+}
+function showStrengthPopup() {
+  const overlay = document.getElementById("strengthOverlay");
+  const popup = document.getElementById("strengthPopup");
+  const slider = document.getElementById("strengthSlider");
+  const level = document.getElementById("levelText");
+  const btns = document.querySelectorAll("#colourButtons button");
+
+  // ── 1) build 1–8 slider, pre-select level 4 ────────────────────────────
+  slider.innerHTML = "";
+  for (let i = 1; i <= 10; i++) {
+    const seg = document.createElement("div");
+    seg.textContent = i;
+    if (i === 4) {
+      seg.classList.add("selected");
+      level.textContent = `Stockfish level ${i}`;
+      if (i < 5) stockLvl = i;
+      else stockLvl = (i - 2) * 2;
+    }
+    seg.addEventListener("click", () => {
+      slider.querySelector(".selected").classList.remove("selected");
+      seg.classList.add("selected");
+      level.textContent = `Stockfish level ${i}`;
+      if (i < 5) stockLvl = i;
+      else stockLvl = (i - 2) * 2;
+    });
+    slider.appendChild(seg);
+  }
+
+  // ── 2) wire up clicks to re-select, close popup, and set flagComp.color ──
+  btns.forEach((b) => {
+    b.onclick = () => {
+      // clear old
+      const prev = document.querySelector("#colourButtons .selected");
+      if (prev) prev.classList.remove("selected");
+
+      // mark new
+      b.classList.add("selected");
+      if (b.dataset.col == "white") flagComp.color = "black";
+      else if (b.dataset.col == "black") flagComp.color = "white";
+      else if (b.dataset.col == "white-black") {
+        const defaultColor = Math.random() < 0.5 ? "white" : "black";
+        flagComp.color = defaultColor;
+        if (flagComp.color === "white") b.dataset.col = "black";
+        else b.dataset.col = "white";
+      }
+      // close
+      hideStrengthPopup();
+
+      //Make Opponent name as Computer
+      let oppName = document.getElementById("opponentName");
+      oppName.value = "Computer";
+      oppName.disabled = true;
+      oppNameValue = "Computer";
+      oppDisableStr = " disabled ";
+
+      showCustomAlert("Your color is " + b.dataset.col);
+      if (flagComp.color === "white") boardClickByUser(4, 4);
+    };
+  });
+
+  // ── 3) finally, show it ──────────────────────────────────────────────────
+  overlay.classList.add("visible");
+  popup.classList.add("visible");
+}
+function hideStrengthPopup() {
+  document.getElementById("strengthOverlay").classList.remove("visible");
+  document.getElementById("strengthPopup").classList.remove("visible");
 }
 function handleConfirm() {
   themeLogoChange("rt2");
@@ -2943,6 +3215,12 @@ let testCases = [
     pgnStr:
       "1.b4 g5 2.b5 a5 3.bxa6 g4 4.h4 gxh3 5.axb7 hxg2 6.bxc8=N gxf1=N 7.Nb6 Ng3 8.Nc4 Nf5 9.Nc3 Nc6 10.Nf3 Nf6 11.Na4 Nd5 12.Nab2 Nf4 13.Nd3 Ne6 14.Nce5 Ned4 15.Nc4 Ne6 16.Nde5 Nfd4 17.Nd3 Nf5 18.Nfe5 Ncd4 19.Nf3 Nc6 20.c3 Ne3 21.Nfe5 Nc2+ 22.Kf1 N2d4 23.Nxd7 Nc2 24.Nce5 N6d4 25.Nxf7 Nc6 26.N7e5 N6d4 27.Nd7 Nc6 28.Nfe5 Ned4 29.Nf7 Ne6 30.N3e5 N2d4 31.Nd3 Nc2",
   },
+  { name: "/checkGameOver1",
+    pgnStr: "1.e4 e5 2.d4 d5 3.Bg5 Qxg5 4.f3 dxe4 5.Na3 exf3 6.c4 Bb4+ 7.Kf2 fxg2 8.Bxg2 Qf4+ 9.Bf3 Qh4+ 10.Ke3 exd4+ 11.Kd3 Bf5+ 12.Be4 Bxe4+ 13.Ke2 d3+ 14.Ke3 Qg3+ 15.Kd4 Nc6+ 16.Kxe4 Nf6+ 17.Kf5 Qe5+"
+  },
+  { name: "/checkGameOver2",
+    pgnStr: "1.e4 e5 2.d4 d5 3.c4 c5 4.b4 b5 5.bxc5 bxc4 6.dxe5 dxe4 7.e6 e3 8.exf7+ Kxf7 9.Bxc4+ Be6 10.Bxe6+ Kxe6 11.Qb3+ Kf6 12.Bb2+ Kg6 13.Qe6+ Nf6 14.Bxf6 gxf6 15.Qg4+ Kf7 16.Qc4+ Kg7 17.fxe3 Be7 18.Nf3 Qa5+ 19.Nbd2 Bxc5 20.O-O Bxe3+ 21.Kh1 Bxd2 22.Qg4+ Kf7 23.Ng5+ Kg6 24.Qe4+ f5 25.Qe6+ Kxg5 26.h4+ Kxh4 27.Qh6+ Kg3 28.Rf3+ Kg4 29.Qg7+ Kh4 30.Rh3+"
+  }
 ];
 function runTestCases(num) {
   let results = [];
