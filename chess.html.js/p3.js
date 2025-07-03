@@ -1,16 +1,16 @@
 //Navbar Line Stay on Active Tab
-document.addEventListener("DOMContentLoaded", function () {
-  var navLinks = document.querySelectorAll(".navbar-nav .nav-link");
+// document.addEventListener("DOMContentLoaded", function () {
+//   var navLinks = document.querySelectorAll(".navbar-nav .nav-link");
 
-  navLinks.forEach(function (link) {
-    link.addEventListener("click", function () {
-      navLinks.forEach(function (nav) {
-        nav.classList.remove("active");
-      });
-      this.classList.add("active");
-    });
-  });
-});
+//   navLinks.forEach(function (link) {
+//     link.addEventListener("click", function () {
+//       navLinks.forEach(function (nav) {
+//         nav.classList.remove("active");
+//       });
+//       this.classList.add("active");
+//     });
+//   });
+// });
 
 //Data
 dataReload();
@@ -36,6 +36,9 @@ function dataReload() {
   originTabIndex = null;
   undoCompBool = true;
   popUpCount = 0;
+  gameStartBool = false;
+  handleBool = false;
+  storeNavIndex = null;
   time = "";
   navIconArr = [
     { icon: "fa-regular fa-hourglass-half", animation: "fa-shake" },
@@ -244,17 +247,22 @@ function createNavbar() {
   });
 }
 function navActions(index) {
+  storeNavIndex = index;
+  if (gameStartBool) {
+    showPopup("End this game?");
+    return;
+  }
+  if (!handleBool && time != "" && gameStartBool) return;
   document
     .querySelectorAll(".navbar-nav .nav-link")
     .forEach((n) => n.classList.remove("active"));
   document.getElementById("Navbar" + index).classList.add("active");
-  makeLeftBar();
-  makeRightBar();
   tabName = navArr[index];
   if (index == 0) {
     time = "";
     document.getElementById("leftbar").innerHTML = "";
     document.getElementById("rightbar").innerHTML = "";
+    gameStartBool = false;
     makeTimer();
   } else if (index == 1) {
     if (time === "") {
@@ -267,9 +275,10 @@ function navActions(index) {
     makeStartBoard();
     makeBoard();
     timerData = [];
+    makeLeftBar();
     makeRightBar();
-    if (popUpCount === 0 && time != "") showPopup("Load New Theme?");
-    popUpCount++;
+    //if (popUpCount === 0 && time != "") showPopup("Load New Theme?");
+    //popUpCount++;
   } else if (index == 2) {
     if (time === "") {
       document.getElementById("leftbar").innerHTML = "";
@@ -285,6 +294,7 @@ function navActions(index) {
     flagComp.color = "white";
     makeStartBoard();
     makeBoard();
+    makeLeftBar();
     makeRightBar();
     if (time != "") showStrengthPopup();
   }
@@ -1028,11 +1038,13 @@ async function boardClickByUser(row, col) {
   boardClick(row, col);
   userNewMoveClick = false;
   let color = moveCount % 2 == 0 ? "white" : "black";
-  console.log(color, moveCount);
+  //console.log(color, moveCount);
   let compMove = "";
   if (color == flagComp.color && flagComp.comp) {
     currFen = convert2Fen(pgnStr).pop();
     compMove = await getBestMove(currFen);
+    if (!flagComp.comp) return;
+    console.log("Computer Move:::",color,moveCount,compMove);
     compRow = "8".charCodeAt(0) - compMove.charCodeAt(1);
     compCol = compMove.charCodeAt(0) - "a".charCodeAt(0);
     boardClick(compRow, compCol);
@@ -1042,7 +1054,7 @@ async function boardClickByUser(row, col) {
     boardClick(compRow, compCol);
     undoCompBool = true;
   }
-  console.log(compMove);
+  //console.log(compMove);
   timerDataFn(false);
   checkGameOver();
 }
@@ -1143,6 +1155,7 @@ function boardClick(row, col) {
       if (Object.keys(temp).length != 0)
         pointUpdateCounter(temp.piece, temp.color);
       //if (document.getElementById("dd3").value === leftBarArr3[0]) showPGN();
+      gameStartBool = true;
     } else if (moveStartConditon(row, col)) {
       prevrow = row;
       prevcol = col;
@@ -2800,7 +2813,7 @@ function convert2Fen(pgn) {
     const chess = new Chess(fens[i]);
     fens.push(addMove2Fen(chess, fens[i], moves[i]));
   }
-  console.log(fens);
+  //console.log(fens);
   return fens;
 }
 function pgn2Arr(pgn) {
@@ -2965,6 +2978,8 @@ function showStrengthPopup() {
   const level = document.getElementById("levelText");
   const btns = document.querySelectorAll("#colourButtons button");
 
+  btns.forEach((b) => b.classList.remove("selected"));
+
   // ── 1) build 1–8 slider, pre-select level 4 ────────────────────────────
   slider.innerHTML = "";
   for (let i = 1; i <= 10; i++) {
@@ -2987,6 +3002,7 @@ function showStrengthPopup() {
   }
 
   // ── 2) wire up clicks to re-select, close popup, and set flagComp.color ──
+  userCol = "";
   btns.forEach((b) => {
     b.onclick = () => {
       // clear old
@@ -2995,13 +3011,17 @@ function showStrengthPopup() {
 
       // mark new
       b.classList.add("selected");
-      if (b.dataset.col == "white") flagComp.color = "black";
-      else if (b.dataset.col == "black") flagComp.color = "white";
-      else if (b.dataset.col == "white-black") {
+      if (b.dataset.col == "white") {
+        flagComp.color = "black";
+        userCol = "White";
+      } else if (b.dataset.col == "black") {
+        flagComp.color = "white";
+        userCol = "Black";
+      } else if (b.dataset.col == "random") {
         const defaultColor = Math.random() < 0.5 ? "white" : "black";
         flagComp.color = defaultColor;
-        if (flagComp.color === "white") b.dataset.col = "black";
-        else b.dataset.col = "white";
+        if (flagComp.color === "white") userCol = "Black";
+        else userCol = "White";
       }
       // close
       hideStrengthPopup();
@@ -3013,7 +3033,8 @@ function showStrengthPopup() {
       oppNameValue = "Computer";
       oppDisableStr = " disabled ";
 
-      showCustomAlert("Your color is " + b.dataset.col);
+      showCustomAlert("Your color is " + userCol);
+
       if (flagComp.color === "white") boardClickByUser(4, 4);
     };
   });
@@ -3027,12 +3048,16 @@ function hideStrengthPopup() {
   document.getElementById("strengthPopup").classList.remove("visible");
 }
 function handleConfirm() {
-  themeLogoChange("rt2");
+  handleBool = true;
+  gameStartBool = false;
+  navActions(storeNavIndex);
+  //themeLogoChange("rt2");
   closeOptionsLeftDD();
   hidePopup();
 }
 function handleCancel() {
   hidePopup();
+  handleBool = false;
 }
 
 // Drag and Drop
@@ -3215,11 +3240,23 @@ let testCases = [
     pgnStr:
       "1.b4 g5 2.b5 a5 3.bxa6 g4 4.h4 gxh3 5.axb7 hxg2 6.bxc8=N gxf1=N 7.Nb6 Ng3 8.Nc4 Nf5 9.Nc3 Nc6 10.Nf3 Nf6 11.Na4 Nd5 12.Nab2 Nf4 13.Nd3 Ne6 14.Nce5 Ned4 15.Nc4 Ne6 16.Nde5 Nfd4 17.Nd3 Nf5 18.Nfe5 Ncd4 19.Nf3 Nc6 20.c3 Ne3 21.Nfe5 Nc2+ 22.Kf1 N2d4 23.Nxd7 Nc2 24.Nce5 N6d4 25.Nxf7 Nc6 26.N7e5 N6d4 27.Nd7 Nc6 28.Nfe5 Ned4 29.Nf7 Ne6 30.N3e5 N2d4 31.Nd3 Nc2",
   },
-  { name: "/checkGameOver1",
+  { name: "/checkGameOverQueen",
     pgnStr: "1.e4 e5 2.d4 d5 3.Bg5 Qxg5 4.f3 dxe4 5.Na3 exf3 6.c4 Bb4+ 7.Kf2 fxg2 8.Bxg2 Qf4+ 9.Bf3 Qh4+ 10.Ke3 exd4+ 11.Kd3 Bf5+ 12.Be4 Bxe4+ 13.Ke2 d3+ 14.Ke3 Qg3+ 15.Kd4 Nc6+ 16.Kxe4 Nf6+ 17.Kf5 Qe5+"
   },
-  { name: "/checkGameOver2",
-    pgnStr: "1.e4 e5 2.d4 d5 3.c4 c5 4.b4 b5 5.bxc5 bxc4 6.dxe5 dxe4 7.e6 e3 8.exf7+ Kxf7 9.Bxc4+ Be6 10.Bxe6+ Kxe6 11.Qb3+ Kf6 12.Bb2+ Kg6 13.Qe6+ Nf6 14.Bxf6 gxf6 15.Qg4+ Kf7 16.Qc4+ Kg7 17.fxe3 Be7 18.Nf3 Qa5+ 19.Nbd2 Bxc5 20.O-O Bxe3+ 21.Kh1 Bxd2 22.Qg4+ Kf7 23.Ng5+ Kg6 24.Qe4+ f5 25.Qe6+ Kxg5 26.h4+ Kxh4 27.Qh6+ Kg3 28.Rf3+ Kg4 29.Qg7+ Kh4 30.Rh3+"
+  { name: "/checkGameOverPawn",
+    pgnStr: "1.f4 e5 2.fxe5 d6 3.exd6 Bxd6 4.Nf3 Nf6 5.d4 Nc6 6.Bg5 h6 7.Bh4 g5 8.Bf2 Ne4 9.e3 g4 10.Bh4 gxf3 11.Bxd8 f2+ 12.Ke2 Bg4+ 13.Kd3 Nb4+ 14.Kxe4 f5+"
+  },
+  { name: "/checkGameOverRook",
+    pgnStr: "1.e4 e5 2.d4 d5 3.Bg5 Qxg5 4.f3 dxe4 5.Na3 exf3 6.c4 Bb4+ 7.Kf2 fxg2 8.Bxg2 Qf4+ 9.Bf3 Qh4+ 10.Ke3 exd4+ 11.Kd3 Bf5+ 12.Be4 Bxe4+ 13.Ke2 d3+ 14.Ke3 Qg3+ 15.Kd4 Nc6+ 16.Kxe4 Nf6+ 17.Kf5 O-O 18.b3 Rae8 19.h3 Re5+"
+  },  
+  { name: "/checkGameOverKnight",
+    pgnStr: "1.e4 e5 2.d4 d5 3.Bg5 Qxg5 4.f3 dxe4 5.Na3 exf3 6.c4 Bb4+ 7.Kf2 fxg2 8.Bxg2 Qf4+ 9.Bf3 Qh4+ 10.Ke3 exd4+ 11.Kd3 Bf5+ 12.Be4 Bxe4+ 13.Ke2 d3+ 14.Ke3 Qg3+ 15.Kd4 Nc6+ 16.Kxe4 Nf6+ 17.Kf5 O-O 18.b3 Rae8 19.h3 Nd4+"
+  },  
+  { name: "/checkGameOverBishop",
+    pgnStr: "1.e4 e5 2.d4 d5 3.Bg5 Qxg5 4.f3 dxe4 5.Na3 exf3 6.c4 Bb4+ 7.Kf2 fxg2 8.Bxg2 Qf4+ 9.Bf3 Qh4+ 10.Ke3 exd4+ 11.Kd3 Bf5+ 12.Be4 Bxe4+ 13.Ke2 d3+ 14.Ke3 Qg3+ 15.Kd4 Nc6+ 16.Kxe4 Nf6+ 17.Kf5 O-O 18.b3 Qh3+ 19.Kg5 Be7 20.b4 Nd5+"
+  },
+  { name: "/checkGameOverAfterEnPassant",
+    pgnStr: "1.e4 e6 2.d4 d5 3.e5 c5 4.c3 cxd4 5.cxd4 Bb4+ 6.Nc3 Nc6 7.Nf3 Nge7 8.Bd3 O-O 9.Bxh7+ Kxh7 10.Ng5+ Kg6 11.h4 Nxd4 12.Qg4 f5 13.h5+ Kh6 14.Nxe6+ g5 15.hxg6+"
   }
 ];
 function runTestCases(num) {
