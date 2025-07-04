@@ -912,9 +912,9 @@ function makeRightBar() {
     oppNameValue +
     "' " +
     oppDisableStr +
-    " placeholder='Opponent'><button class = 'p-3 btn btn-light btn-right w-100 h-100' id='timerWhite' >"+timerWhite+"</button></div><span class = 'color-line-top'></span>" +
+    " placeholder='Opponent'><button class = 'p-3 btn btn-light btn-right w-100 h-100' id='timerWhite' >"+"Timer"+"</button></div><span class = 'color-line-top'></span>" +
     tableStr +
-    "<span class = 'color-line-bottom'></span><div class='btn-group-vertical w-100' role='group'><div class='btn-group' role='group'><input type='text' class='btn-name-right' id='userName' value='You' placeholder='You'><button class = 'p-3 btn btn-light btn-right w-100 h-100' id='timerBlack' >"+timerBlack+"</button></div><div id = 'missingPieceBlack' class='missing-piece-bottom'></div></div></div>";
+    "<span class = 'color-line-bottom'></span><div class='btn-group-vertical w-100' role='group'><div class='btn-group' role='group'><input type='text' class='btn-name-right' id='userName' value='You' placeholder='You'><button class = 'p-3 btn btn-light btn-right w-100 h-100' id='timerBlack' >"+"Timer"+"</button></div><div id = 'missingPieceBlack' class='missing-piece-bottom'></div></div></div>";
 
   if (rightPgnArr && rightPgnArr.length > 1) {
     document.getElementById("showLeftBarMoves").innerHTML = tableArr.join("");
@@ -993,8 +993,8 @@ function calcTimeLeft(color){
 function updateTimerDisplays(){
   timerWhite = calcTimeLeft("white");
   timerBlack = calcTimeLeft("black");
-  document.getElementById("timerWhite").innerHTML = timerWhite;
-  document.getElementById("timerBlack").innerHTML = timerBlack;
+  //document.getElementById("timerWhite").innerHTML = timerWhite;
+  //document.getElementById("timerBlack").innerHTML = timerBlack;
 }
 
 //Game over check
