@@ -32,6 +32,7 @@ function dataReload() {
   flagComp = { comp: false, color: "white" };
   stockLvl = 4;
   oppNameValue = "Opponent";
+  youNameValue = "You(W)";
   oppDisableStr = " ";
   originTabIndex = null;
   undoCompBool = true;
@@ -270,7 +271,8 @@ function navActions(index) {
       document.getElementById("rightbar").innerHTML = "";
     }
     flagComp.comp = false;
-    oppNameValue = "Opponent";
+    oppNameValue = "Opponent(B)";
+    youNameValue = "You(W)";
     oppDisableStr = " ";
     makeStartBoard();
     makeBoard();
@@ -905,16 +907,25 @@ function makeRightBar() {
       tableArr.join("") +
       "</table></div>";
   }
-  let timerWhite = calcTimeLeft("white");
-  let timerBlack = calcTimeLeft("black");
+  if (document.getElementById("timerWhite"))
+    console.log("Pre Step ::: Calculated :::white::"+document.getElementById("timerWhite").innerHTML+" black::"+document.getElementById("timerBlack").innerHTML);
+  let timerWhite = document.getElementById("timerWhite") && document.getElementById("timerWhite").innerHTML ? document.getElementById("timerWhite").innerHTML : convertTimeToDisplay(calcTimeLeft("white"));
+  let timerBlack = document.getElementById("timerBlack") && document.getElementById("timerBlack").innerHTML ? document.getElementById("timerBlack").innerHTML : convertTimeToDisplay(calcTimeLeft("black"));
+  console.log("Post Step :::: Calculated :::white::"+timerWhite+" black::"+timerBlack);
+  let nameWhite = youNameValue;
+  let nameBlack = oppNameValue;
+  if (flagComp.comp && flagComp.color ==="white") {
+    nameWhite = oppNameValue;
+    nameBlack = youNameValue;
+  }
   let rightStr =
     "<div class = 'containerRight'><div id = 'missingPieceWhite' class='missing-piece-top'></div><div class='btn-group-vertical w-100' role='group'><div class='btn-group' role='group'><input type='text' class='btn-name-right' id='opponentName' value='" +
-    oppNameValue +
+    nameBlack +
     "' " +
     oppDisableStr +
-    " placeholder='Opponent'><button class = 'p-3 btn btn-light btn-right w-100 h-100' id='timerWhite' >"+"Timer"+"</button></div><span class = 'color-line-top'></span>" +
+    " placeholder='Opponent'><button class = 'p-3 btn btn-light btn-right w-100 h-100' id='timerBlack' >"+timerBlack+"</button></div><span class = 'color-line-top'></span>" +
     tableStr +
-    "<span class = 'color-line-bottom'></span><div class='btn-group-vertical w-100' role='group'><div class='btn-group' role='group'><input type='text' class='btn-name-right' id='userName' value='You' placeholder='You'><button class = 'p-3 btn btn-light btn-right w-100 h-100' id='timerBlack' >"+"Timer"+"</button></div><div id = 'missingPieceBlack' class='missing-piece-bottom'></div></div></div>";
+    "<span class = 'color-line-bottom'></span><div class='btn-group-vertical w-100' role='group'><div class='btn-group' role='group'><input type='text' class='btn-name-right' id='userName' value='"+nameWhite+"' placeholder='You'><button class = 'p-3 btn btn-light btn-right w-100 h-100' id='timerWhite' >"+timerWhite+"</button></div><div id = 'missingPieceBlack' class='missing-piece-bottom'></div></div></div>";
 
   if (rightPgnArr && rightPgnArr.length > 1) {
     document.getElementById("showLeftBarMoves").innerHTML = tableArr.join("");
@@ -956,8 +967,10 @@ function timerDataFn(isMoveStart) {
   else if (!isMoveStart && timerData.length===moveCount){
     timerData.push(Date.now());
   }
-  if (isMoveStart && timerData.length===1)
-    startTimerTicking(updateTimerDisplays,500);
+  if (isMoveStart && timerData.length===1){
+    updateTimerDisplays();
+    startTimerTicking(updateTimerDisplays,300);
+  }
 }
 
 function startTimerTicking(updateDisplayFn,timeSlice) {
@@ -985,16 +998,25 @@ function calcTimeLeft(color){
     timeUsed = timeUsed + currMoveTime;
   timeUsed = timeUsed/1000;
   timeLeft = Math.trunc(totalTime-timeUsed);
+  return timeLeft;
+}
+
+function convertTimeToDisplay(timeLeft){
   timeLeftMins = Math.trunc(timeLeft/60);
   timeLeftSecs = timeLeft-60*timeLeftMins;
   timeLeftStr = ""+timeLeftMins+":"+(timeLeftSecs>9 ? timeLeftSecs : "0"+timeLeftSecs);
   return timeLeftStr;
 }
+
 function updateTimerDisplays(){
-  timerWhite = calcTimeLeft("white");
-  timerBlack = calcTimeLeft("black");
-  //document.getElementById("timerWhite").innerHTML = timerWhite;
-  //document.getElementById("timerBlack").innerHTML = timerBlack;
+  timerWhiteLeft = calcTimeLeft("white");
+  timerBlackLeft = calcTimeLeft("black");
+  if (timerWhiteLeft<=0 || timerBlackLeft <=0)
+    showPopup("Time Over");
+  else {
+    document.getElementById("timerWhite").innerHTML = convertTimeToDisplay(timerWhiteLeft);
+    document.getElementById("timerBlack").innerHTML = convertTimeToDisplay(timerBlackLeft);
+  }
 }
 
 //Game over check
@@ -1022,9 +1044,10 @@ function checkGameOver(){
       if (!isGameOver)
         break;
     }
-    console.log("isGameOver:::",isGameOver);
-    if (isGameOver)
-      alert("Game is Over");
+    if (isGameOver){
+      showPopup("Game is Over");
+      //alert("Game is Over");
+    }
   }
   prevrow = -1;
   prevcol = -1;
@@ -2841,20 +2864,24 @@ function addMove2Fen(chess, fen, move) {
 }
 
 //StockFish API Calls
-async function callStockAPI(fen, depth = stockLvl) {
+async function callStockAPI(fen, depth = stockLvl,options={}) {
   const url = `https://stockfish.online/api/s/v2.php?fen=${encodeURIComponent(
     fen
   )}&depth=${depth}`;
   try {
-    const response = await fetch(url);
+    const response = await fetch(url,{
+      method: 'GET',
+      signal: options.signal, 
+    });
     const data = await response.json();
     return data;
   } catch (error) {
     console.error("Error fetching Stockfish API:", error);
-    return null;
+    throw error;
+    //return null;
   }
 }
-async function getBestMove(fen) {
+async function getBestMoveOld(fen) {
   const data = await callStockAPI(fen);
   if (data && data.success) {
     let bestmove = data.bestmove;
@@ -2862,6 +2889,38 @@ async function getBestMove(fen) {
   } else {
     console.error("Invalid response from Stockfish API:", data);
     return null;
+  }
+}
+
+async function getBestMove(fen) {
+  const data = await getBestMoveWithRetry(fen);
+  if (data && data.success) {
+    let bestmove = data.bestmove;
+    return bestmove.slice("bestmove ".length, "bestmove ".length + 4);
+  } else {
+    console.error("Invalid response from Stockfish API:", data);
+    return null;
+  }
+}
+
+async function getBestMoveWithRetry(fen, timeout = 3000, maxRetries = 3, retryDelay = 10000) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
+    try {
+      console.log("Calling stockfish API, attempt num=",attempt)
+      const result = await callStockAPI(fen, stockLvl,{ signal: controller.signal });
+      clearTimeout(timeoutId);
+      if (result)
+        return result; 
+    } catch (err) {
+      console.log("Error in stockfish API call, attemop num=",attempt);
+      clearTimeout(timeoutId);
+      if (attempt === maxRetries) {
+        throw err; 
+      }
+    }
+    await new Promise(res => setTimeout(res, retryDelay)); // Optional delay before retry    }
   }
 }
 //UI Building
@@ -3025,12 +3084,18 @@ function showStrengthPopup() {
       }
       // close
       hideStrengthPopup();
+      timerData=[];
+      document.getElementById("timerWhite").innerHTML = "";
+      document.getElementById("timerBlack").innerHTML = "";
 
       //Make Opponent name as Computer
       let oppName = document.getElementById("opponentName");
       oppName.value = "Computer";
+      flagComp.color=="white" ? oppName.value = "Computer(W)" : oppName.value="Computer(B)";
       oppName.disabled = true;
       oppNameValue = "Computer";
+      flagComp.color=="white" ? oppNameValue = "Computer(W)" : oppNameValue="Computer(B)";
+      flagComp.color=="white" ? youNameValue = "You(B)" : youNameValue="You(W)";
       oppDisableStr = " disabled ";
 
       showCustomAlert("Your color is " + userCol);
@@ -3240,22 +3305,22 @@ let testCases = [
     pgnStr:
       "1.b4 g5 2.b5 a5 3.bxa6 g4 4.h4 gxh3 5.axb7 hxg2 6.bxc8=N gxf1=N 7.Nb6 Ng3 8.Nc4 Nf5 9.Nc3 Nc6 10.Nf3 Nf6 11.Na4 Nd5 12.Nab2 Nf4 13.Nd3 Ne6 14.Nce5 Ned4 15.Nc4 Ne6 16.Nde5 Nfd4 17.Nd3 Nf5 18.Nfe5 Ncd4 19.Nf3 Nc6 20.c3 Ne3 21.Nfe5 Nc2+ 22.Kf1 N2d4 23.Nxd7 Nc2 24.Nce5 N6d4 25.Nxf7 Nc6 26.N7e5 N6d4 27.Nd7 Nc6 28.Nfe5 Ned4 29.Nf7 Ne6 30.N3e5 N2d4 31.Nd3 Nc2",
   },
-  { name: "/checkGameOverQueen",
+  { name: "/mateQueen",
     pgnStr: "1.e4 e5 2.d4 d5 3.Bg5 Qxg5 4.f3 dxe4 5.Na3 exf3 6.c4 Bb4+ 7.Kf2 fxg2 8.Bxg2 Qf4+ 9.Bf3 Qh4+ 10.Ke3 exd4+ 11.Kd3 Bf5+ 12.Be4 Bxe4+ 13.Ke2 d3+ 14.Ke3 Qg3+ 15.Kd4 Nc6+ 16.Kxe4 Nf6+ 17.Kf5 Qe5+"
   },
-  { name: "/checkGameOverPawn",
+  { name: "/matePawn",
     pgnStr: "1.f4 e5 2.fxe5 d6 3.exd6 Bxd6 4.Nf3 Nf6 5.d4 Nc6 6.Bg5 h6 7.Bh4 g5 8.Bf2 Ne4 9.e3 g4 10.Bh4 gxf3 11.Bxd8 f2+ 12.Ke2 Bg4+ 13.Kd3 Nb4+ 14.Kxe4 f5+"
   },
-  { name: "/checkGameOverRook",
+  { name: "/mateRook",
     pgnStr: "1.e4 e5 2.d4 d5 3.Bg5 Qxg5 4.f3 dxe4 5.Na3 exf3 6.c4 Bb4+ 7.Kf2 fxg2 8.Bxg2 Qf4+ 9.Bf3 Qh4+ 10.Ke3 exd4+ 11.Kd3 Bf5+ 12.Be4 Bxe4+ 13.Ke2 d3+ 14.Ke3 Qg3+ 15.Kd4 Nc6+ 16.Kxe4 Nf6+ 17.Kf5 O-O 18.b3 Rae8 19.h3 Re5+"
   },  
-  { name: "/checkGameOverKnight",
+  { name: "/mateKnight",
     pgnStr: "1.e4 e5 2.d4 d5 3.Bg5 Qxg5 4.f3 dxe4 5.Na3 exf3 6.c4 Bb4+ 7.Kf2 fxg2 8.Bxg2 Qf4+ 9.Bf3 Qh4+ 10.Ke3 exd4+ 11.Kd3 Bf5+ 12.Be4 Bxe4+ 13.Ke2 d3+ 14.Ke3 Qg3+ 15.Kd4 Nc6+ 16.Kxe4 Nf6+ 17.Kf5 O-O 18.b3 Rae8 19.h3 Nd4+"
   },  
-  { name: "/checkGameOverBishop",
+  { name: "/mateBishop",
     pgnStr: "1.e4 e5 2.d4 d5 3.Bg5 Qxg5 4.f3 dxe4 5.Na3 exf3 6.c4 Bb4+ 7.Kf2 fxg2 8.Bxg2 Qf4+ 9.Bf3 Qh4+ 10.Ke3 exd4+ 11.Kd3 Bf5+ 12.Be4 Bxe4+ 13.Ke2 d3+ 14.Ke3 Qg3+ 15.Kd4 Nc6+ 16.Kxe4 Nf6+ 17.Kf5 O-O 18.b3 Qh3+ 19.Kg5 Be7 20.b4 Nd5+"
   },
-  { name: "/checkGameOverAfterEnPassant",
+  { name: "/mateEnPassant",
     pgnStr: "1.e4 e6 2.d4 d5 3.e5 c5 4.c3 cxd4 5.cxd4 Bb4+ 6.Nc3 Nc6 7.Nf3 Nge7 8.Bd3 O-O 9.Bxh7+ Kxh7 10.Ng5+ Kg6 11.h4 Nxd4 12.Qg4 f5 13.h5+ Kh6 14.Nxe6+ g5 15.hxg6+"
   }
 ];
