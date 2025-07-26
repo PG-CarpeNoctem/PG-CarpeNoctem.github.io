@@ -277,6 +277,7 @@ function navActions(index) {
     makeStartBoard();
     makeBoard();
     timerData = [];
+    timerId = null;
     makeLeftBar();
     makeRightBar();
     //if (popUpCount === 0 && time != "") showPopup("Load New Theme?");
@@ -742,7 +743,7 @@ function defaultFunctionSettings() {
   previousHighlightData = {};
   previousRightBarMoveNum = -1;
   disableBoardForUser = false;
-  if (!runningTestCases) console.clear();
+  //if (!runningTestCases) console.clear();
 }
 
 //Make LeftBar
@@ -907,11 +908,9 @@ function makeRightBar() {
       tableArr.join("") +
       "</table></div>";
   }
-  if (document.getElementById("timerWhite"))
-    console.log("Pre Step ::: Calculated :::white::"+document.getElementById("timerWhite").innerHTML+" black::"+document.getElementById("timerBlack").innerHTML);
   let timerWhite = document.getElementById("timerWhite") && document.getElementById("timerWhite").innerHTML ? document.getElementById("timerWhite").innerHTML : convertTimeToDisplay(calcTimeLeft("white"));
   let timerBlack = document.getElementById("timerBlack") && document.getElementById("timerBlack").innerHTML ? document.getElementById("timerBlack").innerHTML : convertTimeToDisplay(calcTimeLeft("black"));
-  console.log("Post Step :::: Calculated :::white::"+timerWhite+" black::"+timerBlack);
+  console.log("Post Step :::: Calculated :::white::"+timerWhite+" black::"+timerBlack," :: ",timerData.join(","));
   let nameWhite = youNameValue;
   let nameBlack = oppNameValue;
   if (flagComp.comp && flagComp.color ==="white") {
@@ -969,7 +968,7 @@ function timerDataFn(isMoveStart) {
   }
   if (isMoveStart && timerData.length===1){
     updateTimerDisplays();
-    startTimerTicking(updateTimerDisplays,300);
+    timerId = startTimerTicking(updateTimerDisplays,300);
   }
 }
 
@@ -1004,6 +1003,7 @@ function calcTimeLeft(color){
 function convertTimeToDisplay(timeLeft){
   timeLeftMins = Math.trunc(timeLeft/60);
   timeLeftSecs = timeLeft-60*timeLeftMins;
+  timeLeftSecs = timeLeftSecs<0 ? 0 : timeLeftSecs;
   timeLeftStr = ""+timeLeftMins+":"+(timeLeftSecs>9 ? timeLeftSecs : "0"+timeLeftSecs);
   return timeLeftStr;
 }
@@ -1011,11 +1011,12 @@ function convertTimeToDisplay(timeLeft){
 function updateTimerDisplays(){
   timerWhiteLeft = calcTimeLeft("white");
   timerBlackLeft = calcTimeLeft("black");
-  if (timerWhiteLeft<=0 || timerBlackLeft <=0)
+  document.getElementById("timerWhite").innerHTML = convertTimeToDisplay(timerWhiteLeft);
+  document.getElementById("timerBlack").innerHTML = convertTimeToDisplay(timerBlackLeft);
+  if (timerId &&(timerWhiteLeft<=0 || timerBlackLeft <=0)) {
+    if (timerId) clearInterval(timerId);
+    timerId = null;
     showPopup("Time Over");
-  else {
-    document.getElementById("timerWhite").innerHTML = convertTimeToDisplay(timerWhiteLeft);
-    document.getElementById("timerBlack").innerHTML = convertTimeToDisplay(timerBlackLeft);
   }
 }
 
@@ -1062,24 +1063,24 @@ async function boardClickByUser(row, col) {
   userNewMoveClick = false;
   let color = moveCount % 2 == 0 ? "white" : "black";
   //console.log(color, moveCount);
-  let compMove = "";
+  timerDataFn(false);
+  checkGameOver();
   if (color == flagComp.color && flagComp.comp) {
+    timerDataFn(true);
     currFen = convert2Fen(pgnStr).pop();
-    compMove = await getBestMove(currFen);
+    let compMove = await getBestMove(currFen);
     if (!flagComp.comp) return;
     console.log("Computer Move:::",color,moveCount,compMove);
     compRow = "8".charCodeAt(0) - compMove.charCodeAt(1);
     compCol = compMove.charCodeAt(0) - "a".charCodeAt(0);
     boardClick(compRow, compCol);
-    setTimeout(() => {}, 100);
+    setTimeout(() => {}, 50);
     compRow = "8".charCodeAt(0) - compMove.charCodeAt(3);
     compCol = compMove.charCodeAt(2) - "a".charCodeAt(0);
     boardClick(compRow, compCol);
     undoCompBool = true;
+    timerDataFn(false);
   }
-  //console.log(compMove);
-  timerDataFn(false);
-  checkGameOver();
 }
 function boardClick(row, col) {
   //console.log(prevrow, prevcol, row, col);
@@ -3084,6 +3085,7 @@ function showStrengthPopup() {
       }
       // close
       hideStrengthPopup();
+      timerId = null;
       timerData=[];
       document.getElementById("timerWhite").innerHTML = "";
       document.getElementById("timerBlack").innerHTML = "";
@@ -3092,6 +3094,7 @@ function showStrengthPopup() {
       let oppName = document.getElementById("opponentName");
       oppName.value = "Computer";
       flagComp.color=="white" ? oppName.value = "Computer(W)" : oppName.value="Computer(B)";
+      flagComp.color=="white" ? youNameValue = "You(B)" : youNameValue="You(W)";
       oppName.disabled = true;
       oppNameValue = "Computer";
       flagComp.color=="white" ? oppNameValue = "Computer(W)" : oppNameValue="Computer(B)";
@@ -3099,6 +3102,7 @@ function showStrengthPopup() {
       oppDisableStr = " disabled ";
 
       showCustomAlert("Your color is " + userCol);
+      makeRightBar();
 
       if (flagComp.color === "white") boardClickByUser(4, 4);
     };
