@@ -15,6 +15,7 @@
 //Data
 dataReload();
 timerData = [];
+userId = null;
 function dataReload() {
   clrRed = "#ff0000";
   clrYellow = "#ffff00";
@@ -46,11 +47,12 @@ function dataReload() {
     { icon: "fa-solid fa-folder-open", animation: "fa-bounce" },
     { icon: "fa-solid fa-pen-to-square", animation: "fa-fade" },
     { icon: "fa-solid fa-computer", animation: "fa-beat" },
+    { icon : "fa-solid fa-circle-user", animation: "fa-beat"}
   ];
   bodyImageURL = [
     "https://img.freepik.com/free-photo/abstract-fire-desktop-wallpaper-realistic-blazing-flame-image_53876-147448.jpg?size=626&ext=jpg&ga=GA1.1.1546980028.1719792000&semt=ais_user",
   ];
-  navArr = ["Time Limit", "New Game", "Analysis", "Computer"];
+  navArr = ["Time Limit", "New Game", "Analysis", "Computer", "My Account"];
   chessArr = [];
   temp = {};
   pointCountInitInit = {
@@ -300,7 +302,13 @@ function navActions(index) {
     makeLeftBar();
     makeRightBar();
     if (time != "") showStrengthPopup();
+  } else if (index == 4){
+    if (userId)
+      showLogoutPopup();
+    else
+      showLoginPopup();
   }
+
 }
 function makeTimer() {
   selectedStr =
@@ -3358,3 +3366,149 @@ function runOneTestCase(gameJSON) {
     pgnStr.trim() === gameJSON.pgnStr.trim() ? "Matched" : "Error";
   return testResult;
 }
+
+
+//Login and Signup
+let isSignupMode = false;
+
+function showLoginPopup() {
+  isSignupMode = false;
+  updatePopupMode();
+  document.getElementById("loginOverlay").classList.add("visible");
+  document.getElementById("loginPopup").classList.add("visible");
+}
+
+function hideLoginPopup() {
+  document.getElementById("loginOverlay").classList.remove("visible");
+  document.getElementById("loginPopup").classList.remove("visible");
+}
+
+function toggleSignup(signup) {
+  isSignupMode = signup;
+  updatePopupMode();
+}
+
+function updatePopupMode() {
+  const title = document.getElementById("popupTitle");
+  const confirmInput = document.getElementById("signupConfirm");
+  const mainBtn = document.getElementById("mainActionBtn");
+  const toggleText = document.getElementById("toggleText");
+  const toggleLink = document.getElementById("toggleLink");
+  if (isSignupMode) {
+    title.textContent = "Create an account";
+    confirmInput.style.display = "block";
+    mainBtn.textContent = "Sign Up";
+    toggleText.textContent = "Already have an account?";
+    toggleLink.textContent = "Login";
+    toggleLink.setAttribute("onclick", "toggleSignup(false)");
+  } else {
+    title.textContent = "Login to continue";
+    confirmInput.style.display = "none";
+    mainBtn.textContent = "Login";
+    toggleText.textContent = "Don't have an account?";
+    toggleLink.textContent = "Sign Up";
+    toggleLink.setAttribute("onclick", "toggleSignup(true)");
+  }
+}
+
+async function submitLoginOrSignup() {
+  const username = document.getElementById("loginUsername").value.trim();
+  const password = document.getElementById("loginPassword").value.trim();
+  const confirm = document.getElementById("signupConfirm").value.trim();
+  if (!username || !password || (isSignupMode && !confirm)) {
+    showCustomAlert("Please fill out all required fields.");
+    return;
+  }
+  if (isSignupMode && password !== confirm) {
+    showCustomAlert("Passwords do not match.");
+    return;
+  }
+  let resData = null;
+  if (isSignupMode)
+    resData = await callSignupAPI(username,password);
+  else
+    resData = await callLoginAPI(username,password);
+  if (resData && resData.success){
+    userId = username;
+    document.getElementById("loginUsername").value = "";
+    document.getElementById("loginPassword").value = "";
+    document.getElementById("signupConfirm").value = "";
+    hideLoginPopup();
+  }
+}
+
+function showLogoutPopup() {
+  document.getElementById("logoutOverlay").classList.add("visible");
+  document.getElementById("logoutPopup").classList.add("visible");
+}
+
+function hideLogoutPopup() {
+  document.getElementById("logoutOverlay").classList.remove("visible");
+  document.getElementById("logoutPopup").classList.remove("visible");
+}
+
+function confirmLogout() {
+  userId = null;
+  hideLogoutPopup();
+  showCustomAlert("Logged out successfully!");
+}
+
+
+async function callLoginSignupAPI(subUrl,username,password){
+  const url = "https://chessserver-w8ou.onrender.com/api/"+subUrl;
+  const response = await fetch(url,{
+    method: 'POST',
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+        username,
+        password
+      })  
+  });
+  return response;
+}
+
+async function callSignupAPI(username,password) {
+  try {
+    const response = await callLoginSignupAPI("signup",username,password);
+    const data = await response.json();
+    if (!response.ok) {
+      showCustomAlert("Signup failed.");
+      return data;
+    }
+    showCustomAlert("User account created!");
+    hideLoginPopup();
+    return data;
+  } catch (error) {
+    console.error("Error signing up new user:", error);
+    showCustomAlert("Something went wrong. Please try again.");
+    return null;
+  }
+}
+
+async function callLoginAPI(username,password) {
+  try {
+    const response = await callLoginSignupAPI("login",username,password);
+    const data = await response.json();
+    console.log("Login :::: data:::",data.success,"::",data.message);
+    if (!response.ok) {
+      showCustomAlert("Login failed.");
+      return null;
+    }
+    if (data.success){
+      showCustomAlert(data.message);
+      hideLoginPopup();
+      return data;
+    }
+    else {
+      showCustomAlert(data.message);
+      return null;      
+    }
+  } catch (error) {
+    console.error("Error in login:", error);
+    showCustomAlert("Something went wrong. Please try again.");
+    return null;
+  }
+}
+
