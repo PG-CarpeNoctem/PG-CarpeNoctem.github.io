@@ -1203,3 +1203,54 @@ input[type="range"]::-webkit-slider-thumb {
   color: #fff;
   transform: scale(1.05);
 }
+
+/* For the games played history */
+.games-history {
+  width: 50%;
+  margin-right: auto;
+  margin-left: 360px;
+  padding-right: auto;
+  padding-left: auto;
+  padding-top: 15px;
+  position: absolute;
+  z-index: 1;
+}
+.games-history-card {
+  background-color: #2c2c2c;
+  border-radius: 8px;
+  border: 1px solid #444;
+}
+.pgn-preview code {
+  display: block;
+  background-color: #1a1a1a;
+  padding: 10px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow-x: auto;
+  color: #cfcfcf;
+}
+.btn-games-history {
+  background-color: #f8f9fa;
+  border: 1px solid #ccc;
+}
+.btn-.btn-games-history:hover {
+  background-color: #e2e6ea;
+}
+.scroll-container {
+  max-height: 500px; 
+  overflow-y: auto;
+  padding-right: 10px;
+}
+.scroll-container::-webkit-scrollbar {
+  width: 8px;
+}
+.scroll-container::-webkit-scrollbar-thumb {
+  background-color: #888;
+  border-radius: 4px;
+}
+.scroll-container::-webkit-scrollbar-thumb:hover {
+  background-color: #555;
+}
+

@@ -15,7 +15,8 @@
 //Data
 dataReload();
 timerData = [];
-userId = null;
+userToken = null;
+gameStoreId = -1;
 function dataReload() {
   clrRed = "#ff0000";
   clrYellow = "#ffff00";
@@ -47,7 +48,7 @@ function dataReload() {
     { icon: "fa-solid fa-folder-open", animation: "fa-bounce" },
     { icon: "fa-solid fa-pen-to-square", animation: "fa-fade" },
     { icon: "fa-solid fa-computer", animation: "fa-beat" },
-    { icon: "fa-solid fa-circle-user", animation: "fa-beat" },
+    { icon : "fa-solid fa-circle-user", animation: "fa-beat"}
   ];
   bodyImageURL = [
     "https://img.freepik.com/free-photo/abstract-fire-desktop-wallpaper-realistic-blazing-flame-image_53876-147448.jpg?size=626&ext=jpg&ga=GA1.1.1546980028.1719792000&semt=ais_user",
@@ -70,18 +71,18 @@ function dataReload() {
     blackking: 1,
   };
   timeArr = [
-    { display: "1 min", total: 60, incr: 0 },
-    { display: "1|1", total: 60, incr: 1 },
-    { display: "2|1", total: 120, incr: 1 },
-    { display: "3 min", total: 180, incr: 0 },
-    { display: "3|2", total: 180, incr: 2 },
-    { display: "5 min", total: 300, incr: 0 },
-    { display: "10 min", total: 600, incr: 0 },
-    { display: "15|10", total: 900, incr: 10 },
-    { display: "30 min", total: 1800, incr: 0 },
-    { display: "1 day", total: 7200, incr: 0 },
-    { display: "3 days", total: 7200, incr: 0 },
-    { display: "7 days", total: 7200, incr: 0 },
+    {display:"1 min",total:60,incr:0},
+    {display:"1|1",total:60,incr:1},
+    {display:"2|1",total:120,incr:1},
+    {display:"3 min",total:180,incr:0},
+    {display:"3|2",total:180,incr:2},
+    {display:"5 min",total:300,incr:0},
+    {display:"10 min",total:600,incr:0},
+    {display:"15|10",total:900,incr:10},
+    {display:"30 min",total:1800,incr:0},
+    {display:"1 day",total:86400,incr:0},
+    {display:"3 days",total:259200,incr:0},
+    {display:"7 days",total:604800,incr:0},
   ];
   iconTimeArr = [
     "<div class='icon-label1'><i class='fa-solid fa-joint icon' style='color:#DAA520'></i>",
@@ -280,16 +281,24 @@ function navActions(index) {
     makeBoard();
     timerData = [];
     timerId = null;
+    gameStoreId = -1;
     makeLeftBar();
     makeRightBar();
     //if (popUpCount === 0 && time != "") showPopup("Load New Theme?");
     //popUpCount++;
   } else if (index == 2) {
-    if (time === "") {
+    if (time === "" || userToken) {
       document.getElementById("leftbar").innerHTML = "";
       document.getElementById("rightbar").innerHTML = "";
     }
-    showCustomAlert("Under Maintenance");
+    if (userToken){
+      time = "";
+      timerId = null;
+      gameStartBool = false;
+      makeGamesPlayed();
+    }
+    else
+      showCustomAlert("Under Maintenance");
   } else if (index == 3) {
     if (time === "") {
       document.getElementById("leftbar").innerHTML = "";
@@ -302,10 +311,13 @@ function navActions(index) {
     makeLeftBar();
     makeRightBar();
     if (time != "") showStrengthPopup();
-  } else if (index == 4) {
-    if (userId) showLogoutPopup();
-    else showLoginPopup();
+  } else if (index == 4){
+    if (userToken)
+      showLogoutPopup();
+    else
+      showLoginPopup();
   }
+
 }
 function makeTimer() {
   selectedStr =
@@ -913,27 +925,12 @@ function makeRightBar() {
       tableArr.join("") +
       "</table></div>";
   }
-  let timerWhite =
-    document.getElementById("timerWhite") &&
-    document.getElementById("timerWhite").innerHTML
-      ? document.getElementById("timerWhite").innerHTML
-      : convertTimeToDisplay(calcTimeLeft("white"));
-  let timerBlack =
-    document.getElementById("timerBlack") &&
-    document.getElementById("timerBlack").innerHTML
-      ? document.getElementById("timerBlack").innerHTML
-      : convertTimeToDisplay(calcTimeLeft("black"));
-  console.log(
-    "Post Step :::: Calculated :::white::" +
-      timerWhite +
-      " black::" +
-      timerBlack,
-    " :: ",
-    timerData.join(",")
-  );
+  let timerWhite = document.getElementById("timerWhite") && document.getElementById("timerWhite").innerHTML ? document.getElementById("timerWhite").innerHTML : convertTimeToDisplay(calcTimeLeft("white"));
+  let timerBlack = document.getElementById("timerBlack") && document.getElementById("timerBlack").innerHTML ? document.getElementById("timerBlack").innerHTML : convertTimeToDisplay(calcTimeLeft("black"));
+  //console.log("Post Step :::: Calculated :::white::"+timerWhite+" black::"+timerBlack," :: ",timerData.join(","));
   let nameWhite = youNameValue;
   let nameBlack = oppNameValue;
-  if (flagComp.comp && flagComp.color === "white") {
+  if (flagComp.comp && flagComp.color ==="white") {
     nameWhite = oppNameValue;
     nameBlack = youNameValue;
   }
@@ -942,15 +939,9 @@ function makeRightBar() {
     nameBlack +
     "' " +
     oppDisableStr +
-    " placeholder='Opponent'><button class = 'p-3 btn btn-light btn-right w-100 h-100' id='timerBlack' >" +
-    timerBlack +
-    "</button></div><span class = 'color-line-top'></span>" +
+    " placeholder='Opponent'><button class = 'p-3 btn btn-light btn-right w-100 h-100' id='timerBlack' >"+timerBlack+"</button></div><span class = 'color-line-top'></span>" +
     tableStr +
-    "<span class = 'color-line-bottom'></span><div class='btn-group-vertical w-100' role='group'><div class='btn-group' role='group'><input type='text' class='btn-name-right' id='userName' value='" +
-    nameWhite +
-    "' placeholder='You'><button class = 'p-3 btn btn-light btn-right w-100 h-100' id='timerWhite' >" +
-    timerWhite +
-    "</button></div><div id = 'missingPieceBlack' class='missing-piece-bottom'></div></div></div>";
+    "<span class = 'color-line-bottom'></span><div class='btn-group-vertical w-100' role='group'><div class='btn-group' role='group'><input type='text' class='btn-name-right' id='userName' value='"+nameWhite+"' placeholder='You'><button class = 'p-3 btn btn-light btn-right w-100 h-100' id='timerWhite' >"+timerWhite+"</button></div><div id = 'missingPieceBlack' class='missing-piece-bottom'></div></div></div>";
 
   if (rightPgnArr && rightPgnArr.length > 1) {
     document.getElementById("showLeftBarMoves").innerHTML = tableArr.join("");
@@ -986,69 +977,62 @@ function rightBarMoveNumber(moveNum) {
 
 //Timer data
 function timerDataFn(isMoveStart) {
-  if (isMoveStart && timerData.length === moveCount) {
-    timerData.push(Date.now());
-  } else if (!isMoveStart && timerData.length === moveCount) {
+  if (isMoveStart && timerData.length===moveCount){
     timerData.push(Date.now());
   }
-  if (isMoveStart && timerData.length === 1) {
+  else if (!isMoveStart && timerData.length===moveCount){
+    timerData.push(Date.now());
+  }
+  if (isMoveStart && timerData.length===1){
     updateTimerDisplays();
-    timerId = startTimerTicking(updateTimerDisplays, 300);
+    timerId = startTimerTicking(updateTimerDisplays,300);
   }
 }
 
-function startTimerTicking(updateDisplayFn, timeSlice) {
+function startTimerTicking(updateDisplayFn,timeSlice) {
   const timerTicker = setInterval(() => {
     updateDisplayFn();
   }, timeSlice);
   return timerTicker;
 }
-function calcTimeLeft(color) {
-  colorNum = color === "white" ? 0 : 1;
+function calcTimeLeft(color){
+  colorNum = color==="white" ? 0 : 1;
   totalTime = 0;
-  if (colorNum === 0)
-    totalTime =
-      time.total +
-      time.incr * (moveCount % 2 === 0 ? moveCount / 2 : (moveCount + 1) / 2);
+  if (colorNum===0)
+    totalTime = time.total + time.incr*(moveCount%2===0 ? moveCount/2 : (moveCount+1)/2);
   else
-    totalTime =
-      time.total +
-      time.incr * (moveCount % 2 === 0 ? moveCount / 2 : (moveCount - 1) / 2);
+    totalTime = time.total + time.incr*(moveCount%2===0 ? moveCount/2 : (moveCount-1)/2);
   timeUsedArr = [];
-  for (let i = 1; i < timerData.length; i++) {
-    timeUsedArr.push(timerData[i] - timerData[i - 1]);
+  for (let i=1;i<timerData.length;i++){
+    timeUsedArr.push(timerData[i]-timerData[i-1]);
   }
   timeUsed = 0;
-  for (let i = colorNum; i < timeUsedArr.length; i = i + 2)
-    timeUsed += timeUsedArr[i];
-  currMoveTime =
-    timerData.length > 0 ? Date.now() - timerData[timerData.length - 1] : 0;
-  if (moveCount % 2 === colorNum) timeUsed = timeUsed + currMoveTime;
-  timeUsed = timeUsed / 1000;
-  timeLeft = Math.trunc(totalTime - timeUsed);
+  for (let i=colorNum;i<timeUsedArr.length;i=i+2)
+    timeUsed+=timeUsedArr[i];
+  currMoveTime = timerData.length>0 ? Date.now()-timerData[timerData.length-1] : 0;
+  if (moveCount%2===colorNum)
+    timeUsed = timeUsed + currMoveTime;
+  timeUsed = timeUsed/1000;
+  timeLeft = Math.trunc(totalTime-timeUsed);
   return timeLeft;
 }
 
-function convertTimeToDisplay(timeLeft) {
-  timeLeftMins = Math.trunc(timeLeft / 60);
-  timeLeftSecs = timeLeft - 60 * timeLeftMins;
-  timeLeftSecs = timeLeftSecs < 0 ? 0 : timeLeftSecs;
-  timeLeftStr =
-    "" +
-    timeLeftMins +
-    ":" +
-    (timeLeftSecs > 9 ? timeLeftSecs : "0" + timeLeftSecs);
+function convertTimeToDisplay(timeLeft){
+  timeLeftMins = Math.trunc(timeLeft/60);
+  timeLeftSecs = timeLeft-60*timeLeftMins;
+  timeLeftSecs = timeLeftSecs<0 ? 0 : timeLeftSecs;
+  timeLeftStr = ""+timeLeftMins+":"+(timeLeftSecs>9 ? timeLeftSecs : "0"+timeLeftSecs);
   return timeLeftStr;
 }
 
-function updateTimerDisplays() {
+function updateTimerDisplays(){
   timerWhiteLeft = calcTimeLeft("white");
   timerBlackLeft = calcTimeLeft("black");
-  document.getElementById("timerWhite").innerHTML =
-    convertTimeToDisplay(timerWhiteLeft);
-  document.getElementById("timerBlack").innerHTML =
-    convertTimeToDisplay(timerBlackLeft);
-  if (timerId && (timerWhiteLeft <= 0 || timerBlackLeft <= 0)) {
+  if (document.getElementById("timerWhite"))  {
+    document.getElementById("timerWhite").innerHTML = convertTimeToDisplay(timerWhiteLeft);
+    document.getElementById("timerBlack").innerHTML = convertTimeToDisplay(timerBlackLeft);
+  }
+  if (timerId &&(timerWhiteLeft<=0 || timerBlackLeft <=0)) {
     if (timerId) clearInterval(timerId);
     timerId = null;
     showPopup("Time Over");
@@ -1056,29 +1040,31 @@ function updateTimerDisplays() {
 }
 
 //Game over check
-function checkGameOver() {
-  if (prevrow !== -1 && prevcol !== -1) return;
+function checkGameOver(){
+  if (prevrow !== -1 && prevcol !== -1)
+    return;
   makePGN();
   let isGameOver = true;
   pgnStr = pgnStr.trim();
-  if (pgnStr[pgnStr.length - 1] === "+") {
+  if (pgnStr[pgnStr.length-1]==='+'){
     console.log("Check");
-    for (let row = 0; row < 8; row++) {
-      for (let col = 0; col < 8; col++) {
+    for (let row=0;row<8;row++){
+      for (let col=0;col<8;col++){
         prevrow = row;
         prevcol = col;
         showValidMoves();
         inCheckCondition(boardArr[row][col].color);
         //console.log("showMovesArr:::",showMovesArr);
-        if (showMovesArr.length > 0) {
-          console.log("Found a move:::", row, col, showMovesArr);
+        if (showMovesArr.length>0){
+          console.log("Found a move:::",row,col,showMovesArr);
           isGameOver = false;
           break;
         }
       }
-      if (!isGameOver) break;
+      if (!isGameOver)
+        break;
     }
-    if (isGameOver) {
+    if (isGameOver){
       showPopup("Game is Over");
       //alert("Game is Over");
     }
@@ -1089,6 +1075,7 @@ function checkGameOver() {
 
 //Board Logic
 async function boardClickByUser(row, col) {
+  //console.log("boardClickByUser:::::");
   if (disableBoardForUser) return;
   userNewMoveClick = true;
   timerDataFn(true);
@@ -1103,7 +1090,7 @@ async function boardClickByUser(row, col) {
     currFen = convert2Fen(pgnStr).pop();
     let compMove = await getBestMove(currFen);
     if (!flagComp.comp) return;
-    console.log("Computer Move:::", color, moveCount, compMove);
+    console.log("Computer Move:::",color,moveCount,compMove);
     compRow = "8".charCodeAt(0) - compMove.charCodeAt(1);
     compCol = compMove.charCodeAt(0) - "a".charCodeAt(0);
     boardClick(compRow, compCol);
@@ -1213,6 +1200,7 @@ function boardClick(row, col) {
         pointUpdateCounter(temp.piece, temp.color);
       //if (document.getElementById("dd3").value === leftBarArr3[0]) showPGN();
       gameStartBool = true;
+      storeGameData();
     } else if (moveStartConditon(row, col)) {
       prevrow = row;
       prevcol = col;
@@ -2898,14 +2886,14 @@ function addMove2Fen(chess, fen, move) {
 }
 
 //StockFish API Calls
-async function callStockAPI(fen, depth = stockLvl, options = {}) {
+async function callStockAPI(fen, depth = stockLvl,options={}) {
   const url = `https://stockfish.online/api/s/v2.php?fen=${encodeURIComponent(
     fen
   )}&depth=${depth}`;
   try {
-    const response = await fetch(url, {
-      method: "GET",
-      signal: options.signal,
+    const response = await fetch(url,{
+      method: 'GET',
+      signal: options.signal, 
     });
     const data = await response.json();
     return data;
@@ -2937,30 +2925,24 @@ async function getBestMove(fen) {
   }
 }
 
-async function getBestMoveWithRetry(
-  fen,
-  timeout = 3000,
-  maxRetries = 3,
-  retryDelay = 10000
-) {
+async function getBestMoveWithRetry(fen, timeout = 3000, maxRetries = 3, retryDelay = 10000) {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
     try {
-      console.log("Calling stockfish API, attempt num=", attempt);
-      const result = await callStockAPI(fen, stockLvl, {
-        signal: controller.signal,
-      });
+      console.log("Calling stockfish API, attempt num=",attempt)
+      const result = await callStockAPI(fen, stockLvl,{ signal: controller.signal });
       clearTimeout(timeoutId);
-      if (result) return result;
+      if (result)
+        return result; 
     } catch (err) {
-      console.log("Error in stockfish API call, attemop num=", attempt);
+      console.log("Error in stockfish API call, attemop num=",attempt);
       clearTimeout(timeoutId);
       if (attempt === maxRetries) {
-        throw err;
+        throw err; 
       }
     }
-    await new Promise((res) => setTimeout(res, retryDelay)); // Optional delay before retry    }
+    await new Promise(res => setTimeout(res, retryDelay)); // Optional delay before retry    }
   }
 }
 //UI Building
@@ -3125,27 +3107,19 @@ function showStrengthPopup() {
       // close
       hideStrengthPopup();
       timerId = null;
-      timerData = [];
+      timerData=[];
       document.getElementById("timerWhite").innerHTML = "";
       document.getElementById("timerBlack").innerHTML = "";
 
       //Make Opponent name as Computer
       let oppName = document.getElementById("opponentName");
       oppName.value = "Computer";
-      flagComp.color == "white"
-        ? (oppName.value = "Computer(W)")
-        : (oppName.value = "Computer(B)");
-      flagComp.color == "white"
-        ? (youNameValue = "You(B)")
-        : (youNameValue = "You(W)");
+      flagComp.color=="white" ? oppName.value = "Computer(W)" : oppName.value="Computer(B)";
+      flagComp.color=="white" ? youNameValue = "You(B)" : youNameValue="You(W)";
       oppName.disabled = true;
       oppNameValue = "Computer";
-      flagComp.color == "white"
-        ? (oppNameValue = "Computer(W)")
-        : (oppNameValue = "Computer(B)");
-      flagComp.color == "white"
-        ? (youNameValue = "You(B)")
-        : (youNameValue = "You(W)");
+      flagComp.color=="white" ? oppNameValue = "Computer(W)" : oppNameValue="Computer(B)";
+      flagComp.color=="white" ? youNameValue = "You(B)" : youNameValue="You(W)";
       oppDisableStr = " disabled ";
 
       showCustomAlert("Your color is " + userCol);
@@ -3166,6 +3140,7 @@ function hideStrengthPopup() {
 function handleConfirm() {
   handleBool = true;
   gameStartBool = false;
+  gameStoreId = -1;
   navActions(storeNavIndex);
   //themeLogoChange("rt2");
   closeOptionsLeftDD();
@@ -3356,36 +3331,24 @@ let testCases = [
     pgnStr:
       "1.b4 g5 2.b5 a5 3.bxa6 g4 4.h4 gxh3 5.axb7 hxg2 6.bxc8=N gxf1=N 7.Nb6 Ng3 8.Nc4 Nf5 9.Nc3 Nc6 10.Nf3 Nf6 11.Na4 Nd5 12.Nab2 Nf4 13.Nd3 Ne6 14.Nce5 Ned4 15.Nc4 Ne6 16.Nde5 Nfd4 17.Nd3 Nf5 18.Nfe5 Ncd4 19.Nf3 Nc6 20.c3 Ne3 21.Nfe5 Nc2+ 22.Kf1 N2d4 23.Nxd7 Nc2 24.Nce5 N6d4 25.Nxf7 Nc6 26.N7e5 N6d4 27.Nd7 Nc6 28.Nfe5 Ned4 29.Nf7 Ne6 30.N3e5 N2d4 31.Nd3 Nc2",
   },
-  {
-    name: "/mateQueen",
-    pgnStr:
-      "1.e4 e5 2.d4 d5 3.Bg5 Qxg5 4.f3 dxe4 5.Na3 exf3 6.c4 Bb4+ 7.Kf2 fxg2 8.Bxg2 Qf4+ 9.Bf3 Qh4+ 10.Ke3 exd4+ 11.Kd3 Bf5+ 12.Be4 Bxe4+ 13.Ke2 d3+ 14.Ke3 Qg3+ 15.Kd4 Nc6+ 16.Kxe4 Nf6+ 17.Kf5 Qe5+",
+  { name: "/mateQueen",
+    pgnStr: "1.e4 e5 2.d4 d5 3.Bg5 Qxg5 4.f3 dxe4 5.Na3 exf3 6.c4 Bb4+ 7.Kf2 fxg2 8.Bxg2 Qf4+ 9.Bf3 Qh4+ 10.Ke3 exd4+ 11.Kd3 Bf5+ 12.Be4 Bxe4+ 13.Ke2 d3+ 14.Ke3 Qg3+ 15.Kd4 Nc6+ 16.Kxe4 Nf6+ 17.Kf5 Qe5+"
   },
-  {
-    name: "/matePawn",
-    pgnStr:
-      "1.f4 e5 2.fxe5 d6 3.exd6 Bxd6 4.Nf3 Nf6 5.d4 Nc6 6.Bg5 h6 7.Bh4 g5 8.Bf2 Ne4 9.e3 g4 10.Bh4 gxf3 11.Bxd8 f2+ 12.Ke2 Bg4+ 13.Kd3 Nb4+ 14.Kxe4 f5+",
+  { name: "/matePawn",
+    pgnStr: "1.f4 e5 2.fxe5 d6 3.exd6 Bxd6 4.Nf3 Nf6 5.d4 Nc6 6.Bg5 h6 7.Bh4 g5 8.Bf2 Ne4 9.e3 g4 10.Bh4 gxf3 11.Bxd8 f2+ 12.Ke2 Bg4+ 13.Kd3 Nb4+ 14.Kxe4 f5+"
   },
-  {
-    name: "/mateRook",
-    pgnStr:
-      "1.e4 e5 2.d4 d5 3.Bg5 Qxg5 4.f3 dxe4 5.Na3 exf3 6.c4 Bb4+ 7.Kf2 fxg2 8.Bxg2 Qf4+ 9.Bf3 Qh4+ 10.Ke3 exd4+ 11.Kd3 Bf5+ 12.Be4 Bxe4+ 13.Ke2 d3+ 14.Ke3 Qg3+ 15.Kd4 Nc6+ 16.Kxe4 Nf6+ 17.Kf5 O-O 18.b3 Rae8 19.h3 Re5+",
+  { name: "/mateRook",
+    pgnStr: "1.e4 e5 2.d4 d5 3.Bg5 Qxg5 4.f3 dxe4 5.Na3 exf3 6.c4 Bb4+ 7.Kf2 fxg2 8.Bxg2 Qf4+ 9.Bf3 Qh4+ 10.Ke3 exd4+ 11.Kd3 Bf5+ 12.Be4 Bxe4+ 13.Ke2 d3+ 14.Ke3 Qg3+ 15.Kd4 Nc6+ 16.Kxe4 Nf6+ 17.Kf5 O-O 18.b3 Rae8 19.h3 Re5+"
+  },  
+  { name: "/mateKnight",
+    pgnStr: "1.e4 e5 2.d4 d5 3.Bg5 Qxg5 4.f3 dxe4 5.Na3 exf3 6.c4 Bb4+ 7.Kf2 fxg2 8.Bxg2 Qf4+ 9.Bf3 Qh4+ 10.Ke3 exd4+ 11.Kd3 Bf5+ 12.Be4 Bxe4+ 13.Ke2 d3+ 14.Ke3 Qg3+ 15.Kd4 Nc6+ 16.Kxe4 Nf6+ 17.Kf5 O-O 18.b3 Rae8 19.h3 Nd4+"
+  },  
+  { name: "/mateBishop",
+    pgnStr: "1.e4 e5 2.d4 d5 3.Bg5 Qxg5 4.f3 dxe4 5.Na3 exf3 6.c4 Bb4+ 7.Kf2 fxg2 8.Bxg2 Qf4+ 9.Bf3 Qh4+ 10.Ke3 exd4+ 11.Kd3 Bf5+ 12.Be4 Bxe4+ 13.Ke2 d3+ 14.Ke3 Qg3+ 15.Kd4 Nc6+ 16.Kxe4 Nf6+ 17.Kf5 O-O 18.b3 Qh3+ 19.Kg5 Be7 20.b4 Nd5+"
   },
-  {
-    name: "/mateKnight",
-    pgnStr:
-      "1.e4 e5 2.d4 d5 3.Bg5 Qxg5 4.f3 dxe4 5.Na3 exf3 6.c4 Bb4+ 7.Kf2 fxg2 8.Bxg2 Qf4+ 9.Bf3 Qh4+ 10.Ke3 exd4+ 11.Kd3 Bf5+ 12.Be4 Bxe4+ 13.Ke2 d3+ 14.Ke3 Qg3+ 15.Kd4 Nc6+ 16.Kxe4 Nf6+ 17.Kf5 O-O 18.b3 Rae8 19.h3 Nd4+",
-  },
-  {
-    name: "/mateBishop",
-    pgnStr:
-      "1.e4 e5 2.d4 d5 3.Bg5 Qxg5 4.f3 dxe4 5.Na3 exf3 6.c4 Bb4+ 7.Kf2 fxg2 8.Bxg2 Qf4+ 9.Bf3 Qh4+ 10.Ke3 exd4+ 11.Kd3 Bf5+ 12.Be4 Bxe4+ 13.Ke2 d3+ 14.Ke3 Qg3+ 15.Kd4 Nc6+ 16.Kxe4 Nf6+ 17.Kf5 O-O 18.b3 Qh3+ 19.Kg5 Be7 20.b4 Nd5+",
-  },
-  {
-    name: "/mateEnPassant",
-    pgnStr:
-      "1.e4 e6 2.d4 d5 3.e5 c5 4.c3 cxd4 5.cxd4 Bb4+ 6.Nc3 Nc6 7.Nf3 Nge7 8.Bd3 O-O 9.Bxh7+ Kxh7 10.Ng5+ Kg6 11.h4 Nxd4 12.Qg4 f5 13.h5+ Kh6 14.Nxe6+ g5 15.hxg6+",
-  },
+  { name: "/mateEnPassant",
+    pgnStr: "1.e4 e6 2.d4 d5 3.e5 c5 4.c3 cxd4 5.cxd4 Bb4+ 6.Nc3 Nc6 7.Nf3 Nge7 8.Bd3 O-O 9.Bxh7+ Kxh7 10.Ng5+ Kg6 11.h4 Nxd4 12.Qg4 f5 13.h5+ Kh6 14.Nxe6+ g5 15.hxg6+"
+  }
 ];
 function runTestCases(num) {
   let results = [];
@@ -3417,6 +3380,7 @@ function runOneTestCase(gameJSON) {
     pgnStr.trim() === gameJSON.pgnStr.trim() ? "Matched" : "Error";
   return testResult;
 }
+
 
 //Login and Signup
 let isSignupMode = false;
@@ -3474,10 +3438,12 @@ async function submitLoginOrSignup() {
     return;
   }
   let resData = null;
-  if (isSignupMode) resData = await callSignupAPI(username, password);
-  else resData = await callLoginAPI(username, password);
-  if (resData && resData.success) {
-    userId = username;
+  if (isSignupMode)
+    resData = await callSignupAPI(username,password);
+  else
+    resData = await callLoginAPI(username,password);
+  if (resData && resData.success){
+    userToken = resData.token;
     document.getElementById("loginUsername").value = "";
     document.getElementById("loginPassword").value = "";
     document.getElementById("signupConfirm").value = "";
@@ -3496,37 +3462,44 @@ function hideLogoutPopup() {
 }
 
 function confirmLogout() {
-  userId = null;
+  userToken = null;
   hideLogoutPopup();
   showCustomAlert("Logged out successfully!");
 }
 
-async function callLoginSignupAPI(subUrl, username, password) {
-  const url = "https://chessserver-w8ou.onrender.com/api/" + subUrl;
-  const response = await fetch(url, {
-    method: "POST",
+
+async function callLoginSignupAPI(subUrl,username,password){
+  const url = "https://chessserver-w8ou.onrender.com/api/"+subUrl;
+  const response = await fetch(url,{
+    method: 'POST',
     headers: {
-      "Content-Type": "application/json",
+      "Content-Type": "application/json"
     },
     body: JSON.stringify({
-      username,
-      password,
-    }),
+        username,
+        password
+      })  
   });
   return response;
 }
 
-async function callSignupAPI(username, password) {
+async function callSignupAPI(username,password) {
   try {
-    const response = await callLoginSignupAPI("signup", username, password);
+    const response = await callLoginSignupAPI("signup",username,password);
     const data = await response.json();
     if (!response.ok) {
       showCustomAlert("Signup failed.");
       return data;
     }
-    showCustomAlert("User account created!");
-    hideLoginPopup();
-    return data;
+    if (data.success){
+      showCustomAlert("User account created!");
+      hideLoginPopup();
+      return data;
+    }
+    else {
+      showCustomAlert(data.message);
+      return null;      
+    }
   } catch (error) {
     console.error("Error signing up new user:", error);
     showCustomAlert("Something went wrong. Please try again.");
@@ -3534,22 +3507,23 @@ async function callSignupAPI(username, password) {
   }
 }
 
-async function callLoginAPI(username, password) {
+async function callLoginAPI(username,password) {
   try {
-    const response = await callLoginSignupAPI("login", username, password);
+    const response = await callLoginSignupAPI("login",username,password);
     const data = await response.json();
-    console.log("Login :::: data:::", data.success, "::", data.message);
+    console.log("Login :::: data:::",data.success,"::",data.message);
     if (!response.ok) {
       showCustomAlert("Login failed.");
       return null;
     }
-    if (data.success) {
+    if (data.success){
       showCustomAlert(data.message);
       hideLoginPopup();
       return data;
-    } else {
+    }
+    else {
       showCustomAlert(data.message);
-      return null;
+      return null;      
     }
   } catch (error) {
     console.error("Error in login:", error);
@@ -3557,3 +3531,100 @@ async function callLoginAPI(username, password) {
     return null;
   }
 }
+async function storeGameData(){
+  if (!userToken)
+    return;
+  myColor = "white";
+  if (flagComp.comp && flagComp.color === "white")
+    myColor = "black";
+  oppComp = "Player Mode";
+  if (flagComp.comp) 
+    oppComp = "Computer Mode: Stockfish Level "+stockLvl;
+  gameDetails = {id : gameStoreId, color : myColor, computer: oppComp, timeWhite: 0, timeBlack:0, pgn:pgnStr};
+  data = await callStoreGameAPI(gameDetails);
+  if (data && data.success)
+    gameStoreId = data.gameId;
+}
+async function callStoreGameAPI(gameDetails) {
+  try {
+    const url = "https://chessserver-w8ou.onrender.com/api/postGame";
+    const authString = "Bearer " + (userToken ? userToken : "");
+    console.log(JSON.stringify(gameDetails));
+    console.log(JSON.stringify(authString));
+    const response = await fetch(url,{
+      method: 'POST',
+      headers: {
+        "Authorization": authString,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+          gameDetails
+        })  
+    });
+    if (!response.ok)
+      return null;
+    const data = await response.json();
+    return data;
+  }
+  catch (error){
+    console.log("callStoreGameAPI:::",error);
+    return null;
+  }
+}
+
+async function getGamesPlayed() {
+  try {
+    const url = "https://chessserver-w8ou.onrender.com/api/getGames";
+    const authString = "Bearer " + (userToken ? userToken : "");
+    console.log("getGamesPlayed():::",JSON.stringify(authString));
+    const response = await fetch(url,{
+      method: 'GET',
+      headers: {
+        "Authorization": authString,
+        "Content-Type": "application/json"
+      },
+    });
+    if (!response.ok)
+      return null;
+    const data = await response.json();
+    return data;
+  }
+  catch (error){
+    console.log("callStoreGameAPI:::",error);
+    return null;
+  }
+}
+
+async function makeGamesPlayed(gamesPlayed){
+  if (!userToken)
+    return;
+  gamesPlayed = await getGamesPlayed();
+  console.log(JSON.stringify(gamesPlayed));
+  if (!gamesPlayed)
+    return;
+  gamePlayedStr =
+    "<div class='col p-0 mb-2 mx-1 bg-transparent '><div class='row justify-content-center'><span class='p-3 btn-green w-100 h-100'><span>Games Played</span></span></div></div>";
+  gameStr = "";
+  gamesPlayed.games.forEach(function (game, index) {
+    gameStr += `
+      <div class='games-history-card mb-3 text-start p-3'>
+        <div class='d-flex justify-content-between align-items-center mb-1'>
+          <div><strong>Game #${index + 1}</strong> (${game.color})&nbsp;&nbsp;${game.computer}</div>
+          <button class='btn btn-success btn-sm' onclick='loadGame(${index})'>Load Game</button>
+        </div>
+        <div class='pgn-preview'>
+          <code>${game.pgn}</code>
+        </div>
+      </div>
+    `;
+  });
+  displayStr =
+    "<div class='containerFrame text-center'>" + 
+    gamePlayedStr +
+    "<div class='scroll-container'>" +
+    gameStr +
+    "</div></div></div>";
+  document.getElementById("display").innerHTML = displayStr;
+}
+
+
