@@ -1235,7 +1235,7 @@ input[type="range"]::-webkit-slider-thumb {
   background-color: #f8f9fa;
   border: 1px solid #ccc;
 }
-.btn-.btn-games-history:hover {
+.btn-games-history:hover {
   background-color: #e2e6ea;
 }
 .scroll-container {

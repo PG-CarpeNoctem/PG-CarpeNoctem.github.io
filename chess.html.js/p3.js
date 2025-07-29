@@ -212,6 +212,8 @@ function dataReload() {
 
 //Routine Function Calls
 routineFunctionCalls();
+testStockfishServer();
+testChessServer();
 function routineFunctionCalls() {
   defaultFunctionSettings();
   makeDefaultUISettings1();
@@ -250,6 +252,19 @@ function createNavbar() {
     });
   });
 }
+function endCurrentGame(){
+  flagComp.comp = false;
+  oppNameValue = "Opponent(B)";
+  youNameValue = "You(W)";
+  oppDisableStr = " ";
+  makeStartBoard();
+  makeBoard();
+  timerData = [];
+  timerId = null;
+  gameStoreId = -1;
+  makeLeftBar();
+  makeRightBar();
+}
 function navActions(index) {
   storeNavIndex = index;
   if (gameStartBool) {
@@ -273,17 +288,7 @@ function navActions(index) {
       document.getElementById("leftbar").innerHTML = "";
       document.getElementById("rightbar").innerHTML = "";
     }
-    flagComp.comp = false;
-    oppNameValue = "Opponent(B)";
-    youNameValue = "You(W)";
-    oppDisableStr = " ";
-    makeStartBoard();
-    makeBoard();
-    timerData = [];
-    timerId = null;
-    gameStoreId = -1;
-    makeLeftBar();
-    makeRightBar();
+    endCurrentGame();
     //if (popUpCount === 0 && time != "") showPopup("Load New Theme?");
     //popUpCount++;
   } else if (index == 2) {
@@ -1090,7 +1095,7 @@ async function boardClickByUser(row, col) {
     currFen = convert2Fen(pgnStr).pop();
     let compMove = await getBestMove(currFen);
     if (!flagComp.comp) return;
-    console.log("Computer Move:::",color,moveCount,compMove);
+    //console.log("Computer Move:::",color,moveCount,compMove);
     compRow = "8".charCodeAt(0) - compMove.charCodeAt(1);
     compCol = compMove.charCodeAt(0) - "a".charCodeAt(0);
     boardClick(compRow, compCol);
@@ -2858,7 +2863,6 @@ function convert2Fen(pgn) {
     const chess = new Chess(fens[i]);
     fens.push(addMove2Fen(chess, fens[i], moves[i]));
   }
-  //console.log(fens);
   return fens;
 }
 function pgn2Arr(pgn) {
@@ -2886,8 +2890,17 @@ function addMove2Fen(chess, fen, move) {
 }
 
 //StockFish API Calls
-async function callStockAPI(fen, depth = stockLvl,options={}) {
-  const url = `https://stockfish.online/api/s/v2.php?fen=${encodeURIComponent(
+function testStockfishServer(){
+  //console.log("calling testStockfishServer");
+  const url = "https://stockfishserver.onrender.com/test/basic";
+  fetch(url,{method: 'GET'});
+}
+
+async function callStockAPI(fen="", depth = stockLvl,options={}) {
+  const baseServer = "https://stockfishserver.onrender.com/best-move";
+  //const baseServer = "https://stockfish.online/api/s/v2.php";
+  //https://stockfishserver.onrender.com/best-move?fen=rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR%20w%20KQkq%20-%200%201&depth=5
+  const url = `${baseServer}?fen=${encodeURIComponent(
     fen
   )}&depth=${depth}`;
   try {
@@ -2908,35 +2921,42 @@ async function getBestMoveOld(fen) {
   if (data && data.success) {
     let bestmove = data.bestmove;
     return bestmove.slice("bestmove ".length, "bestmove ".length + 4);
-  } else {
+  } else if (data && data.raw){
+    return data.bestMove
+  }
+  else{
     console.error("Invalid response from Stockfish API:", data);
     return null;
   }
 }
 
 async function getBestMove(fen) {
+  showCustomAlert("Fetching computer's move",false);
   const data = await getBestMoveWithRetry(fen);
   if (data && data.success) {
+    hideCustomAlert();
     let bestmove = data.bestmove;
     return bestmove.slice("bestmove ".length, "bestmove ".length + 4);
+  } else if (data && data.raw){
+    hideCustomAlert();
+    return data.bestMove;
   } else {
     console.error("Invalid response from Stockfish API:", data);
     return null;
   }
 }
 
-async function getBestMoveWithRetry(fen, timeout = 3000, maxRetries = 3, retryDelay = 10000) {
+async function getBestMoveWithRetry(fen, timeout = 10000, maxRetries = 8, retryDelay = 10000) {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
     try {
-      console.log("Calling stockfish API, attempt num=",attempt)
       const result = await callStockAPI(fen, stockLvl,{ signal: controller.signal });
       clearTimeout(timeoutId);
       if (result)
         return result; 
     } catch (err) {
-      console.log("Error in stockfish API call, attemop num=",attempt);
+      console.log("Error in stockfish API call, attempt num=",attempt);
       clearTimeout(timeoutId);
       if (attempt === maxRetries) {
         throw err; 
@@ -2990,7 +3010,7 @@ function blendColors(colorA, colorB, amount) {
     .padStart(2, "0");
   return "#" + r + g + b;
 }
-function showCustomAlert(message) {
+function showCustomAlert(message,hide=true) {
   const alertBox = document.getElementById("customAlert");
   const alertMessage = document.getElementById("customAlertMessage");
   alertMessage.textContent = message;
@@ -2998,12 +3018,17 @@ function showCustomAlert(message) {
   alertBox.style.opacity = 1; // Fade in
 
   // Hide the alert after 2 seconds
-  setTimeout(function () {
-    alertBox.style.opacity = 0; // Fade out
+  if (hide)
     setTimeout(function () {
-      alertBox.style.display = "none";
-    }, 500); // Wait for the fade out transition to complete
-  }, 1000); // Display duration
+      alertBox.style.opacity = 0; // Fade out
+      setTimeout(function () {
+        alertBox.style.display = "none";
+      }, 500); // Wait for the fade out transition to complete
+    }, 1000); // Display duration
+}
+function hideCustomAlert(){
+  const alertBox = document.getElementById("customAlert");
+  alertBox.style.display = "none";
 }
 function updateBoxShadow() {
   this.style.boxShadow = `0 0 1px 1px ${this.value}`;
@@ -3141,7 +3166,8 @@ function handleConfirm() {
   handleBool = true;
   gameStartBool = false;
   gameStoreId = -1;
-  navActions(storeNavIndex);
+  endCurrentGame();
+  navActions(storeNavIndex); //to end the current game
   //themeLogoChange("rt2");
   closeOptionsLeftDD();
   hidePopup();
@@ -3438,6 +3464,7 @@ async function submitLoginOrSignup() {
     return;
   }
   let resData = null;
+  showCustomAlert("Communicating with the server",false);
   if (isSignupMode)
     resData = await callSignupAPI(username,password);
   else
@@ -3466,7 +3493,11 @@ function confirmLogout() {
   hideLogoutPopup();
   showCustomAlert("Logged out successfully!");
 }
-
+function testChessServer(){
+  //console.log("calling testChessServer");
+  const url = "https://chessserver-w8ou.onrender.com/test/basic";
+  fetch(url,{method: 'GET'});
+}
 
 async function callLoginSignupAPI(subUrl,username,password){
   const url = "https://chessserver-w8ou.onrender.com/api/"+subUrl;
@@ -3511,7 +3542,6 @@ async function callLoginAPI(username,password) {
   try {
     const response = await callLoginSignupAPI("login",username,password);
     const data = await response.json();
-    console.log("Login :::: data:::",data.success,"::",data.message);
     if (!response.ok) {
       showCustomAlert("Login failed.");
       return null;
@@ -3549,8 +3579,6 @@ async function callStoreGameAPI(gameDetails) {
   try {
     const url = "https://chessserver-w8ou.onrender.com/api/postGame";
     const authString = "Bearer " + (userToken ? userToken : "");
-    console.log(JSON.stringify(gameDetails));
-    console.log(JSON.stringify(authString));
     const response = await fetch(url,{
       method: 'POST',
       headers: {
@@ -3573,10 +3601,10 @@ async function callStoreGameAPI(gameDetails) {
 }
 
 async function getGamesPlayed() {
+  showCustomAlert("Fetching from the server",false);
   try {
     const url = "https://chessserver-w8ou.onrender.com/api/getGames";
     const authString = "Bearer " + (userToken ? userToken : "");
-    console.log("getGamesPlayed():::",JSON.stringify(authString));
     const response = await fetch(url,{
       method: 'GET',
       headers: {
@@ -3584,6 +3612,7 @@ async function getGamesPlayed() {
         "Content-Type": "application/json"
       },
     });
+    hideCustomAlert();
     if (!response.ok)
       return null;
     const data = await response.json();
@@ -3599,7 +3628,6 @@ async function makeGamesPlayed(gamesPlayed){
   if (!userToken)
     return;
   gamesPlayed = await getGamesPlayed();
-  console.log(JSON.stringify(gamesPlayed));
   if (!gamesPlayed)
     return;
   gamePlayedStr =
