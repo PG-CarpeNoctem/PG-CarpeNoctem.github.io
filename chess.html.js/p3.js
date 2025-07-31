@@ -16,6 +16,9 @@
 dataReload();
 timerData = [];
 userToken = null;
+myAccountName = null;
+navbarMyAccountNode = null;
+displayOnScreen = "";
 gameStoreId = -1;
 function dataReload() {
   clrRed = "#ff0000";
@@ -239,10 +242,12 @@ function createNavbar() {
     icon.className = navIconArr[index].icon;
 
     a.appendChild(icon);
-    a.appendChild(document.createTextNode(" " + ele));
+    const txtNode = document.createTextNode(" " + ele);
+    a.appendChild(txtNode);
     li.appendChild(a);
     navbar.appendChild(li);
-
+    if (ele==="My Account")
+      navbarMyAccountNode = txtNode; 
     // Add event listeners for hover effect
     a.addEventListener("mouseover", () => {
       icon.classList.add(navIconArr[index].animation);
@@ -250,7 +255,19 @@ function createNavbar() {
     a.addEventListener("mouseout", () => {
       icon.classList.remove(navIconArr[index].animation);
     });
-  });
+  }); 
+}
+function updateMyAccountInNavbar(loginlogout=false){
+  console.log("updateMyAccountInNavbar::myAccountName=",myAccountName,"::time=",time);
+  if (myAccountName)
+    navbarMyAccountNode.textContent = myAccountName;
+  else
+    navbarMyAccountNode.textContent = "My Account";
+  if (!loginlogout) return;
+  if (time=="")
+    switchNavTab_MakeTimer();
+  else
+    switchNavTab_LoadGame();
 }
 function endCurrentGame(){
   flagComp.comp = false;
@@ -266,11 +283,20 @@ function endCurrentGame(){
   makeRightBar();
 }
 function navActions(index) {
+  if (index===4){
+    navActionsMyAccount();
+    return;
+  }
   storeNavIndex = index;
-  if (gameStartBool) {
+  if (gameStartBool &&(index!=2 || userToken)) {
+    console.log(gameStartBool, index, userToken)
     showPopup("End this game?");
     return;
   }
+  if (index == 2) {
+    navActionsAnalysis();
+    return;
+  } 
   if (!handleBool && time != "" && gameStartBool) return;
   document
     .querySelectorAll(".navbar-nav .nav-link")
@@ -289,22 +315,11 @@ function navActions(index) {
       document.getElementById("rightbar").innerHTML = "";
     }
     endCurrentGame();
+    displayOnScreen = navArr[1];
     //if (popUpCount === 0 && time != "") showPopup("Load New Theme?");
     //popUpCount++;
-  } else if (index == 2) {
-    if (time === "" || userToken) {
-      document.getElementById("leftbar").innerHTML = "";
-      document.getElementById("rightbar").innerHTML = "";
-    }
-    if (userToken){
-      time = "";
-      timerId = null;
-      gameStartBool = false;
-      makeGamesPlayed();
-    }
-    else
-      showCustomAlert("Under Maintenance");
-  } else if (index == 3) {
+  }
+  else if (index == 3) {
     if (time === "") {
       document.getElementById("leftbar").innerHTML = "";
       document.getElementById("rightbar").innerHTML = "";
@@ -316,13 +331,29 @@ function navActions(index) {
     makeLeftBar();
     makeRightBar();
     if (time != "") showStrengthPopup();
-  } else if (index == 4){
-    if (userToken)
-      showLogoutPopup();
-    else
-      showLoginPopup();
+  } 
+}
+function navActionsAnalysis(){
+  if (!userToken){
+    showCustomAlert("Please login first");
+    return;
   }
-
+  if (time === "" || userToken) {
+    document.getElementById("leftbar").innerHTML = "";
+    document.getElementById("rightbar").innerHTML = "";
+  }
+  if (userToken){
+    time = "";
+    timerId = null;
+    gameStartBool = false;
+    makeGamesPlayed();
+  }
+}
+function navActionsMyAccount(){
+  if (userToken)
+    showLogoutPopup();
+  else
+    showLoginPopup();
 }
 function makeTimer() {
   selectedStr =
@@ -352,6 +383,7 @@ function makeTimer() {
     formArr.join("") +
     "</div><div class='col p-0 mb-2 mx-1 bg-transparent '><div id = 'info' class='row justify-content-center'></div></div>";
   document.getElementById("display").innerHTML = displayStr;
+  displayOnScreen = navArr[0];
 }
 function btnTimeActions(index) {
   time = timeArr[index];
@@ -933,11 +965,11 @@ function makeRightBar() {
   let timerWhite = document.getElementById("timerWhite") && document.getElementById("timerWhite").innerHTML ? document.getElementById("timerWhite").innerHTML : convertTimeToDisplay(calcTimeLeft("white"));
   let timerBlack = document.getElementById("timerBlack") && document.getElementById("timerBlack").innerHTML ? document.getElementById("timerBlack").innerHTML : convertTimeToDisplay(calcTimeLeft("black"));
   //console.log("Post Step :::: Calculated :::white::"+timerWhite+" black::"+timerBlack," :: ",timerData.join(","));
-  let nameWhite = youNameValue;
+  let nameWhite = myAccountName ? myAccountName+"(W)" : youNameValue;
   let nameBlack = oppNameValue;
   if (flagComp.comp && flagComp.color ==="white") {
     nameWhite = oppNameValue;
-    nameBlack = youNameValue;
+    nameBlack = myAccountName ? myAccountName+"(B)" : youNameValue;
   }
   let rightStr =
     "<div class = 'containerRight'><div id = 'missingPieceWhite' class='missing-piece-top'></div><div class='btn-group-vertical w-100' role='group'><div class='btn-group' role='group'><input type='text' class='btn-name-right' id='opponentName' value='" +
@@ -2891,7 +2923,7 @@ function addMove2Fen(chess, fen, move) {
 
 //StockFish API Calls
 function testStockfishServer(){
-  //console.log("calling testStockfishServer");
+  console.log("calling testStockfishServer");
   const url = "https://stockfishserver.onrender.com/test/basic";
   fetch(url,{method: 'GET'});
 }
@@ -3412,15 +3444,17 @@ function runOneTestCase(gameJSON) {
 let isSignupMode = false;
 
 function showLoginPopup() {
+  console.log("showLoginPopup");
   isSignupMode = false;
   updatePopupMode();
   document.getElementById("loginOverlay").classList.add("visible");
   document.getElementById("loginPopup").classList.add("visible");
 }
 
-function hideLoginPopup() {
+function hideLoginPopup(loginlogout=false) {
   document.getElementById("loginOverlay").classList.remove("visible");
   document.getElementById("loginPopup").classList.remove("visible");
+  updateMyAccountInNavbar(loginlogout);
 }
 
 function toggleSignup(signup) {
@@ -3471,10 +3505,11 @@ async function submitLoginOrSignup() {
     resData = await callLoginAPI(username,password);
   if (resData && resData.success){
     userToken = resData.token;
+    myAccountName = username;
     document.getElementById("loginUsername").value = "";
     document.getElementById("loginPassword").value = "";
     document.getElementById("signupConfirm").value = "";
-    hideLoginPopup();
+    hideLoginPopup(true);
   }
 }
 
@@ -3486,15 +3521,19 @@ function showLogoutPopup() {
 function hideLogoutPopup() {
   document.getElementById("logoutOverlay").classList.remove("visible");
   document.getElementById("logoutPopup").classList.remove("visible");
+  updateMyAccountInNavbar();
 }
 
 function confirmLogout() {
   userToken = null;
+  myAccountName = null;
   hideLogoutPopup();
   showCustomAlert("Logged out successfully!");
+  if (displayOnScreen===navArr[2])
+    navActions(0);
 }
 function testChessServer(){
-  //console.log("calling testChessServer");
+  console.log("calling testChessServer");
   const url = "https://chessserver-w8ou.onrender.com/test/basic";
   fetch(url,{method: 'GET'});
 }
@@ -3524,7 +3563,7 @@ async function callSignupAPI(username,password) {
     }
     if (data.success){
       showCustomAlert("User account created!");
-      hideLoginPopup();
+      hideLoginPopup(true);
       return data;
     }
     else {
@@ -3548,7 +3587,7 @@ async function callLoginAPI(username,password) {
     }
     if (data.success){
       showCustomAlert(data.message);
-      hideLoginPopup();
+      hideLoginPopup(true);
       return data;
     }
     else {
@@ -3653,6 +3692,7 @@ async function makeGamesPlayed(gamesPlayed){
     gameStr +
     "</div></div></div>";
   document.getElementById("display").innerHTML = displayStr;
+  displayOnScreen = navArr[2];
 }
 
 
