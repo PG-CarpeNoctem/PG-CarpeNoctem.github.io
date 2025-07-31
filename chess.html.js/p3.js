@@ -288,15 +288,15 @@ function navActions(index) {
     return;
   }
   storeNavIndex = index;
+  if (index===2 && !userToken){
+    showCustomAlert("Please login first");
+    return;
+  }
   if (gameStartBool &&(index!=2 || userToken)) {
     console.log(gameStartBool, index, userToken)
     showPopup("End this game?");
     return;
   }
-  if (index == 2) {
-    navActionsAnalysis();
-    return;
-  } 
   if (!handleBool && time != "" && gameStartBool) return;
   document
     .querySelectorAll(".navbar-nav .nav-link")
@@ -319,6 +319,9 @@ function navActions(index) {
     //if (popUpCount === 0 && time != "") showPopup("Load New Theme?");
     //popUpCount++;
   }
+  else if (index===2){
+    navActionsAnalysis();
+  }
   else if (index == 3) {
     if (time === "") {
       document.getElementById("leftbar").innerHTML = "";
@@ -334,10 +337,6 @@ function navActions(index) {
   } 
 }
 function navActionsAnalysis(){
-  if (!userToken){
-    showCustomAlert("Please login first");
-    return;
-  }
   if (time === "" || userToken) {
     document.getElementById("leftbar").innerHTML = "";
     document.getElementById("rightbar").innerHTML = "";
