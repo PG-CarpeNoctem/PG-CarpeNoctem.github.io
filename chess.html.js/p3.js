@@ -1101,7 +1101,10 @@ function checkGameOver(){
         break;
     }
     if (isGameOver){
-      showPopup("Game is Over");
+      console.log("MoveCount=",moveCount," ",youNameValue," ",oppNameValue);
+      let strName = moveCount%2===1 ? youNameValue : oppNameValue;
+      let str = "Game over. Game won by "+strName;
+      showGameOverPopup(str);
       //alert("Game is Over");
     }
   }
@@ -1136,6 +1139,7 @@ async function boardClickByUser(row, col) {
     boardClick(compRow, compCol);
     undoCompBool = true;
     timerDataFn(false);
+    checkGameOver();
   }
 }
 function boardClick(row, col) {
@@ -3105,8 +3109,18 @@ function showPopup(message) {
 function hidePopup() {
   const popupOverlay = document.getElementById("popupOverlay");
   const popup = document.getElementById("customPopup");
+  const gameOverPopup = document.getElementById("gameOverPopup");
   popupOverlay.classList.remove("visible");
   popup.classList.remove("visible");
+  gameOverPopup.classList.remove("visible");
+}
+function showGameOverPopup(message){
+  const popupOverlay = document.getElementById("popupOverlay");
+  const popup = document.getElementById("gameOverPopup");
+  const popupMessage = document.getElementById("gameOverMessage");
+  popupMessage.textContent = message;
+  popupOverlay.classList.add("visible");
+  popup.classList.add("visible");
 }
 function showStrengthPopup() {
   const overlay = document.getElementById("strengthOverlay");
@@ -3661,7 +3675,9 @@ async function getGamesPlayed() {
     return null;
   }
 }
-
+function analyseGame(index){
+  showCustomAlert("Under maintenance");
+}
 async function makeGamesPlayed(gamesPlayed){
   if (!userToken)
     return;
@@ -3676,7 +3692,7 @@ async function makeGamesPlayed(gamesPlayed){
       <div class='games-history-card mb-3 text-start p-3'>
         <div class='d-flex justify-content-between align-items-center mb-1'>
           <div><strong>Game #${index + 1}</strong> (${game.color})&nbsp;&nbsp;${game.computer}</div>
-          <button class='btn btn-success btn-sm' onclick='loadGame(${index})'>Load Game</button>
+          <button class='btn btn-success btn-sm' onclick='analyseGame(${index})'>Analyse Game</button>
         </div>
         <div class='pgn-preview'>
           <code>${game.pgn}</code>

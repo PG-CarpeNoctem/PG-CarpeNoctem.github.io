@@ -888,7 +888,7 @@ input[type="range"]::-webkit-slider-thumb {
 .popup-overlay.visible {
   display: block;
 }
-.popup {
+.popup, .game-over-popup {
   display: none;
   position: fixed;
   top: 10%;
@@ -906,7 +906,10 @@ input[type="range"]::-webkit-slider-thumb {
   text-align: center;
   width: 300px;
 }
-.popup.visible {
+.game-over-popup {
+  width : 425px;
+}
+.popup.visible, .game-over-popup.visible{
   display: block;
   opacity: 1;
 }
@@ -937,6 +940,15 @@ input[type="range"]::-webkit-slider-thumb {
 }
 .popup-buttons .cancel:hover {
   background-color: rgba(220, 53, 69, 0.9);
+  color: #fff;
+  transform: scale(1.05);
+}
+.popup-buttons .analyse {
+  background-color: rgba(18, 102, 186, 0.645);
+  color: white;
+}
+.popup-buttons .analyse:hover {
+  background-color: rgba(51, 122, 192, 0.9);
   color: #fff;
   transform: scale(1.05);
 }
