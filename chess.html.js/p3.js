@@ -1101,8 +1101,14 @@ function checkGameOver(){
         break;
     }
     if (isGameOver){
-      console.log("MoveCount=",moveCount," ",youNameValue," ",oppNameValue);
-      let strName = moveCount%2===1 ? youNameValue : oppNameValue;
+      let nameWhite = myAccountName ? myAccountName+"(W)" : youNameValue;
+      let nameBlack = oppNameValue;
+      if (flagComp.comp && flagComp.color ==="white") {
+        nameWhite = oppNameValue;
+        nameBlack = myAccountName ? myAccountName+"(B)" : youNameValue;
+      }
+      console.log("MoveCount=",moveCount," ",nameWhite," ",nameBlack);
+      let strName = moveCount%2===1 ? nameWhite : nameBlack;
       let str = "Game over. Game won by "+strName;
       showGameOverPopup(str);
       //alert("Game is Over");
