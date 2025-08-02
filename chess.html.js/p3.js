@@ -959,40 +959,79 @@ function makeRightBar() {
         "</td></tr>"
       );
   });
-  let headStr = "";
-  headStr =
+  let headStr =
     "<thead>" +
-    "<div class='btn-group rounded-1' role='group'><button class = 'p-3 btn btn-light btn-right-block w-100 h-100' onclick = 'copyPGN()'><i class='fa-solid fa-copy'></i></button><button class = 'p-3 btn btn-light btn-right-block w-100 h-100' onclick = 'backwardFastPGN()'><i class='fa-solid fa-backward-fast'></i></button><button class = 'p-3 btn btn-light btn-right-block w-100 h-100' onclick = 'backwardStepPGN()'><i class='fa-solid fa-backward-step'></i></button><button class = 'p-3 btn btn-light btn-right-block w-100 h-100' onclick = 'forwardStepPGN()'><i class='fa-solid fa-forward-step'></i></button><button class = 'p-3 btn btn-light btn-right-block w-100 h-100' onclick = 'forwardFastPGN()'><i class='fa-solid fa-forward-fast'></i></button><button class = 'p-3 btn btn-light btn-right-block w-100 h-100' onclick = 'flipBoard()'><i class='fa-solid fa-rotate'></i></button></div>" +
+    "<div class='btn-group-vertical w-100' role='group'>" +
+    "<div class='btn-group rounded-1' role='group'>" +
+    "<button class='p-3 btn btn-light btn-right-block w-100 h-100' onclick='copyPGN()'><i class='fa-solid fa-copy'></i></button>" +
+    "<button class='p-3 btn btn-light btn-right-block w-100 h-100' onclick='backwardFastPGN()'><i class='fa-solid fa-backward-fast'></i></button>" +
+    "<button class='p-3 btn btn-light btn-right-block w-100 h-100' onclick='backwardStepPGN()'><i class='fa-solid fa-backward-step'></i></button>" +
+    "<button class='p-3 btn btn-light btn-right-block w-100 h-100' onclick='forwardStepPGN()'><i class='fa-solid fa-forward-step'></i></button>" +
+    "<button class='p-3 btn btn-light btn-right-block w-100 h-100' onclick='forwardFastPGN()'><i class='fa-solid fa-forward-fast'></i></button>" +
+    "<button class='p-3 btn btn-light btn-right-block w-100 h-100' onclick='flipBoard()'><i class='fa-solid fa-rotate'></i></button>" +
+    "</div>" +
+    "</div>" +
     "</thead>";
   if (rightPgnArr.length != 0) {
     tableStr =
       headStr +
-      "<div class = 'table-container'><table class = 'table-dark table-block'  id='showLeftBarMoves'>" +
+      "<div class='table-container'><table class='table-dark table-block' id='showLeftBarMoves'>" +
       tableArr.join("") +
       "</table></div>";
   }
-  let timerWhite = document.getElementById("timerWhite") && document.getElementById("timerWhite").innerHTML ? document.getElementById("timerWhite").innerHTML : convertTimeToDisplay(calcTimeLeft("white"));
-  let timerBlack = document.getElementById("timerBlack") && document.getElementById("timerBlack").innerHTML ? document.getElementById("timerBlack").innerHTML : convertTimeToDisplay(calcTimeLeft("black"));
-  //console.log("Post Step :::: Calculated :::white::"+timerWhite+" black::"+timerBlack," :: ",timerData.join(","));
-  let nameWhite = myAccountName ? myAccountName+"(W)" : youNameValue;
+  let timerWhite = document.getElementById("timerWhite")?.innerHTML || convertTimeToDisplay(calcTimeLeft("white"));
+  let timerBlack = document.getElementById("timerBlack")?.innerHTML || convertTimeToDisplay(calcTimeLeft("black"));
+  let nameWhite = myAccountName ? myAccountName + "(W)" : youNameValue;
   let nameBlack = oppNameValue;
-  if (flagComp.comp && flagComp.color ==="white") {
+  if (flagComp.comp && flagComp.color === "white") {
     nameWhite = oppNameValue;
-    nameBlack = myAccountName ? myAccountName+"(B)" : youNameValue;
+    nameBlack = myAccountName ? myAccountName + "(B)" : youNameValue;
   }
+  const isMobile = window.innerWidth <= 768;
+  let timersHTMLBlack =`
+    <div id="timersOnlyContainerBlack" class='btn-group-vertical w-100' role='group'>
+      <div class='btn-group' role='group'>
+        <input type='text' class='btn-name-right' id='opponentName' value=${nameBlack} ${oppDisableStr} placeholder='Opponent'>
+        <button class = 'p-3 btn btn-light btn-right w-100 h-100' id='timerBlack' >${timerBlack}</button>
+      </div>
+    </div>
+  `;
+  let timersHTMLWhite =`
+    <div id="timersOnlyContainerWhite" class='btn-group-vertical w-100' role='group'>
+      <div class='btn-group' role='group'>
+        <input type='text' class='btn-name-right' id='userName' value=${nameWhite} placeholder='You'>
+        <button class = 'p-3 btn btn-light btn-right w-100 h-100' id='timerWhite' >${timerWhite}</button>
+      </div>
+    </div>
+  `;
   let rightStr =
-    "<div class = 'containerRight'><div id = 'missingPieceWhite' class='missing-piece-top'></div><div class='btn-group-vertical w-100' role='group'><div class='btn-group' role='group'><input type='text' class='btn-name-right' id='opponentName' value='" +
-    nameBlack +
-    "' " +
-    oppDisableStr +
-    " placeholder='Opponent'><button class = 'p-3 btn btn-light btn-right w-100 h-100' id='timerBlack' >"+timerBlack+"</button></div><span class = 'color-line-top'></span>" +
-    tableStr +
-    "<span class = 'color-line-bottom'></span><div class='btn-group-vertical w-100' role='group'><div class='btn-group' role='group'><input type='text' class='btn-name-right' id='userName' value='"+nameWhite+"' placeholder='You'><button class = 'p-3 btn btn-light btn-right w-100 h-100' id='timerWhite' >"+timerWhite+"</button></div><div id = 'missingPieceBlack' class='missing-piece-bottom'></div></div></div>";
-
-  if (rightPgnArr && rightPgnArr.length > 1) {
+    `<div class='containerRight'>
+      <div id='missingPieceWhite' class='missing-piece-top'></div>
+      ${isMobile ? "" : timersHTMLBlack}
+      <span class='color-line-top'></span>
+      ${tableStr}
+      <span class='color-line-bottom'></span>
+      ${isMobile ? "" : timersHTMLWhite}
+      <div id='missingPieceBlack' class='missing-piece-bottom'></div>
+    </div>`;
+  const rightbar = document.getElementById("rightbar");
+  rightbar.innerHTML = rightStr;
+  const display = document.getElementById("display");
+  const existingTimers = document.getElementById("timersOnlyContainer");
+  if (existingTimers) existingTimers.remove();
+  if (isMobile) {
+    if (display && !document.getElementById("timersOnlyContainer")) {
+      console.log("Appending timersHTMLBlack+timersHTMLWhite");
+      timersOnlyContainer = `<div id="timersOnlyContainer">${timersHTMLBlack} ${timersHTMLWhite}</div>`;
+      display.insertAdjacentHTML("afterend", timersOnlyContainer);
+    }
+  }
+  if (rightPgnArr.length > 1) {
     document.getElementById("showLeftBarMoves").innerHTML = tableArr.join("");
-  } else document.getElementById("rightbar").innerHTML = rightStr;
-  if (rightPgnArr.length != 0 && rightPgnArr.length != 1) {
+  }
+
+  // Scroll to bottom of move list
+  if (rightPgnArr.length !== 0 && rightPgnArr.length !== 1) {
     let tableContainer = document.querySelector(".table-container");
     tableContainer.scrollTop = tableContainer.scrollHeight;
     missingPiecesUpdate();
