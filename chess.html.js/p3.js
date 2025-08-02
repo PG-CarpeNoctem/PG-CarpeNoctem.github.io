@@ -236,7 +236,17 @@ function createNavbar() {
     a.className = "nav-link nav-item";
     a.href = "#";
     a.id = "Navbar" + index;
-    a.onclick = () => navActions(index);
+    //a.onclick = () => navActions(index);
+    a.onclick = () => {
+      navActions(index);
+      // Collapse the navbar (only if visible) This is for the hamburger on mobile
+      const navbarCollapse = document.querySelector(".navbar-collapse");
+      if (navbarCollapse.classList.contains("show")) {
+        const bsCollapse = new bootstrap.Collapse(navbarCollapse, {
+          toggle: true
+        });
+      }
+    };
 
     const icon = document.createElement("i");
     icon.className = navIconArr[index].icon;
