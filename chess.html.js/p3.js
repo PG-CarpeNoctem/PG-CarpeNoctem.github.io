@@ -401,6 +401,9 @@ function makeTimer() {
   document.getElementById("display").innerHTML = displayStr;
   displayOnScreen = navArr[0];
   tabClickedByUser = navArr[0];
+  const existingTimers = document.getElementById("timersOnlyContainer");
+  if (existingTimers) existingTimers.remove();
+
 }
 function btnTimeActions(index) {
   time = timeArr[index];
@@ -1000,7 +1003,7 @@ function makeRightBar() {
   let timersHTMLBlack =`
     <div id="timersOnlyContainerBlack" class='btn-group-vertical w-100' role='group'>
       <div class='btn-group' role='group'>
-        <input type='text' class='btn-name-right' id='opponentName' value=${nameBlack} ${oppDisableStr} placeholder='Opponent'>
+        <input type='text' class='btn-name-right' id='opponentName' value=${"&nbsp;&nbsp;"+nameBlack} ${oppDisableStr} placeholder='Opponent'>
         <button class = 'p-3 btn btn-light btn-right w-100 h-100' id='timerBlack' >${timerBlack}</button>
       </div>
     </div>
@@ -1008,7 +1011,7 @@ function makeRightBar() {
   let timersHTMLWhite =`
     <div id="timersOnlyContainerWhite" class='btn-group-vertical w-100' role='group'>
       <div class='btn-group' role='group'>
-        <input type='text' class='btn-name-right' id='userName' value=${nameWhite} placeholder='You'>
+        <input type='text' class='btn-name-right' id='userName' value=${"&nbsp;&nbsp;"+nameWhite} placeholder='You'>
         <button class = 'p-3 btn btn-light btn-right w-100 h-100' id='timerWhite' >${timerWhite}</button>
       </div>
     </div>

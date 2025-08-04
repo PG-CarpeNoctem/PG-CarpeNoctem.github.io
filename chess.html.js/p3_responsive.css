@@ -1278,7 +1278,7 @@ input[type="range"]::-webkit-slider-thumb {
     width: 100% !important;
     margin-left: 0 !important;
     position: relative !important;
-    padding: 2px !important;
+    padding: 1px !important;
   }
 
   .containerLeft,
@@ -1300,11 +1300,6 @@ input[type="range"]::-webkit-slider-thumb {
   .btn-confirm {
     font-size: 16px !important;
     padding: 10px !important;
-  }
-
-  .cellBox {
-    width: 40px !important;
-    height: 40px !important;
   }
 
   .label-col-box {
@@ -1339,7 +1334,7 @@ input[type="range"]::-webkit-slider-thumb {
   .containerRight {
     position: static !important;
     width: 100% !important;
-    margin: 2px auto !important;
+    margin: 1px auto !important;
     float: none !important;
     clear: both !important;
   }
@@ -1369,17 +1364,14 @@ input[type="range"]::-webkit-slider-thumb {
     font-size: 16px !important;
     padding: 10px !important;
   }
-  /*
-  .cellBox {
-    width: 40px !important;
-    height: 40px !important;
-  }
-  */
+
   .cellBox {
     width: 11.5vw !important;  /* 100 / 8 = 12.5 */
     height: 11.5vw !important;
     padding: 0 !important;
     margin: 0 !important;
+    overflow: visible !important;
+    box-sizing: content-box !important;
   }
 
   .label-col-box {
@@ -1401,12 +1393,13 @@ input[type="range"]::-webkit-slider-thumb {
   }
 
   .cellBox img {
-    width: 80% !important;
-    height: 80% !important;
-    object-fit: cover !important;
+    width: 85% !important;
+    height: 85% !important;
+    object-fit: contain !important;
+    display: block !important;
+    margin: auto !important;   
   }
 
-  .cellBox,
   .draggable-element {
     padding: 0 !important;
     margin: 0 !important;
