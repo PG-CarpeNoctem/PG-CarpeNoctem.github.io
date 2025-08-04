@@ -3248,23 +3248,12 @@ function showStrengthPopup() {
       hideStrengthPopup();
       timerId = null;
       timerData=[];
-      document.getElementById("timerWhite").innerHTML = "";
-      document.getElementById("timerBlack").innerHTML = "";
-
-      //Make Opponent name as Computer
-      let oppName = document.getElementById("opponentName");
-      oppName.value = "Computer";
-      flagComp.color=="white" ? oppName.value = "Computer(W)" : oppName.value="Computer(B)";
-      flagComp.color=="white" ? youNameValue = "You(B)" : youNameValue="You(W)";
-      oppName.disabled = true;
-      oppNameValue = "Computer";
       flagComp.color=="white" ? oppNameValue = "Computer(W)" : oppNameValue="Computer(B)";
       flagComp.color=="white" ? youNameValue = "You(B)" : youNameValue="You(W)";
       oppDisableStr = " disabled ";
-
       showCustomAlert("Your color is " + userCol);
+      tabClickedByUser = navArr[1];
       makeRightBar();
-
       if (flagComp.color === "white") boardClickByUser(4, 4);
     };
   });
