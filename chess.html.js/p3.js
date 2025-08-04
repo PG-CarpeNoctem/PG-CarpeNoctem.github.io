@@ -14,12 +14,15 @@
 
 //Data
 dataReload();
+mobileResponsiveMaxWidth = 850;
+userInfo = JSON.parse(localStorage.getItem("userInfo"));
 timerData = [];
-userToken = null;
-myAccountName = null;
+userToken = userInfo ? userInfo.userToken : null;
+myAccountName = userInfo ? userInfo.myAccountName : null;
 navbarMyAccountNode = null;
 displayOnScreen = "";
 gameStoreId = -1;
+tabClickedByUser = "";
 function dataReload() {
   clrRed = "#ff0000";
   clrYellow = "#ffff00";
@@ -185,7 +188,7 @@ function dataReload() {
       { txt: "Change Previous Moves Color", icon: "fa-circle-arrow-left" },
       { txt: "Change Piece Type", icon: "fa-chess-pawn" },
       { txt: "Add Background Image", icon: "fa-image" },
-      { txt: "Show Column & Row", icon: "fa-eye" },
+      { txt: "Show Column & Row", icon: "fa-eye", notInMobile: true},
     ],
     [
       { txt: "Default", icon: "fa-user" },
@@ -252,12 +255,15 @@ function createNavbar() {
     icon.className = navIconArr[index].icon;
 
     a.appendChild(icon);
-    const txtNode = document.createTextNode(" " + ele);
+    let txtNode = document.createTextNode(" " + ele);
+    if (ele==="My Account"){
+      if (myAccountName)
+        txtNode = document.createTextNode(" " + myAccountName);
+      navbarMyAccountNode = txtNode; 
+    }
     a.appendChild(txtNode);
     li.appendChild(a);
     navbar.appendChild(li);
-    if (ele==="My Account")
-      navbarMyAccountNode = txtNode; 
     // Add event listeners for hover effect
     a.addEventListener("mouseover", () => {
       icon.classList.add(navIconArr[index].animation);
@@ -324,8 +330,9 @@ function navActions(index) {
       document.getElementById("leftbar").innerHTML = "";
       document.getElementById("rightbar").innerHTML = "";
     }
-    endCurrentGame();
     displayOnScreen = navArr[1];
+    tabClickedByUser = navArr[1];
+    endCurrentGame();
     //if (popUpCount === 0 && time != "") showPopup("Load New Theme?");
     //popUpCount++;
   }
@@ -393,6 +400,7 @@ function makeTimer() {
     "</div><div class='col p-0 mb-2 mx-1 bg-transparent '><div id = 'info' class='row justify-content-center'></div></div>";
   document.getElementById("display").innerHTML = displayStr;
   displayOnScreen = navArr[0];
+  tabClickedByUser = navArr[0];
 }
 function btnTimeActions(index) {
   time = timeArr[index];
@@ -418,7 +426,7 @@ function makeCell(row, col) {
   if (col === 0) {
     labelStr = colRowBool
       ? "<div class = 'p-1 label-col-box'>" + (8 - row) + "</div>"
-      : "<div class = 'p-1 label-col-box'></div>";
+      : window.innerWidth > mobileResponsiveMaxWidth ? "<div class = 'p-1 label-col-box'></div>" : "";
   } else labelStr = "";
   num = showMovesArr.findIndex(function (ele) {
     return ele.row === row && ele.col === col;
@@ -861,7 +869,7 @@ function makeLeftDD(ele, index1, isOpen) {
 function makeLeftBarDDMenu(index1) {
   return leftBarArr[index1]
     .map(function (ele, index2) {
-      return (
+      let x = 
         "<button class='btn dd-menu-block btn-bd-secondary w-100 h-100' style='padding-left:36px' type='button' onclick='showOptionsLeftDD(" +
         index1 +
         "," +
@@ -872,8 +880,9 @@ function makeLeftBarDDMenu(index1) {
         "'></i>" +
         "&nbsp;&nbsp;" +
         ele.txt +
-        "</button>"
-      );
+        "</button>";
+      if (window.innerWidth <= mobileResponsiveMaxWidth && ele.notInMobile) return "";
+       else return x; 
     })
     .join("");
 }
@@ -987,7 +996,7 @@ function makeRightBar() {
     nameWhite = oppNameValue;
     nameBlack = myAccountName ? myAccountName + "(B)" : youNameValue;
   }
-  const isMobile = window.innerWidth <= 768;
+  const isMobile = window.innerWidth <= mobileResponsiveMaxWidth;
   let timersHTMLBlack =`
     <div id="timersOnlyContainerBlack" class='btn-group-vertical w-100' role='group'>
       <div class='btn-group' role='group'>
@@ -1019,11 +1028,14 @@ function makeRightBar() {
   const display = document.getElementById("display");
   const existingTimers = document.getElementById("timersOnlyContainer");
   if (existingTimers) existingTimers.remove();
+  console.log("tabClickedByUser:::",tabClickedByUser);
   if (isMobile) {
-    if (display && !document.getElementById("timersOnlyContainer")) {
-      console.log("Appending timersHTMLBlack+timersHTMLWhite");
-      timersOnlyContainer = `<div id="timersOnlyContainer">${timersHTMLBlack} ${timersHTMLWhite}</div>`;
-      display.insertAdjacentHTML("afterend", timersOnlyContainer);
+    if (tabClickedByUser===navArr[1]){
+      if (display && !document.getElementById("timersOnlyContainer")) {
+        console.log("Appending::: timersHTMLBlack+timersHTMLWhite");
+        timersOnlyContainer = `<div id="timersOnlyContainer">${timersHTMLBlack} ${timersHTMLWhite}</div>`;
+        display.insertAdjacentHTML("afterend", timersOnlyContainer);
+      }
     }
   }
   if (rightPgnArr.length > 1) {
@@ -3068,7 +3080,7 @@ function makeDefaultColors() {
 }
 function makeDefaultUISettings1() {
   makeDefaultColors();
-  colRowBoolInitial = true;
+  colRowBoolInitial = window.innerWidth > mobileResponsiveMaxWidth; //true;
   colRowBool = colRowBoolInitial;
   imagePath = baseImagePath + pieceImagePaths[0];
 }
@@ -3079,7 +3091,7 @@ function makeDefaultUISettings2() {
   highlightPieceBool = highlightPieceBoolInitial;
   highlightPreviousBoolInitial = true;
   highlightPreviousBool = highlightPreviousBoolInitial;
-  highlightDotRadiusInitial = 16;
+  highlightDotRadiusInitial = window.innerWidth > mobileResponsiveMaxWidth ? 16 : 10;
   highlightDotRadius = highlightDotRadiusInitial;
 }
 function hello(a, b) {
@@ -3266,6 +3278,7 @@ function handleConfirm() {
   handleBool = true;
   gameStartBool = false;
   gameStoreId = -1;
+  tabClickedByUser = storeNavIndex;
   endCurrentGame();
   navActions(storeNavIndex); //to end the current game
   //themeLogoChange("rt2");
@@ -3574,6 +3587,7 @@ async function submitLoginOrSignup() {
   if (resData && resData.success){
     userToken = resData.token;
     myAccountName = username;
+    localStorage.setItem('userInfo', JSON.stringify({userToken:userToken,myAccountName:myAccountName}));
     document.getElementById("loginUsername").value = "";
     document.getElementById("loginPassword").value = "";
     document.getElementById("signupConfirm").value = "";
@@ -3595,6 +3609,7 @@ function hideLogoutPopup() {
 function confirmLogout() {
   userToken = null;
   myAccountName = null;
+  localStorage.removeItem('userInfo');
   hideLogoutPopup();
   showCustomAlert("Logged out successfully!");
   if (displayOnScreen===navArr[2])
@@ -3708,7 +3723,6 @@ async function callStoreGameAPI(gameDetails) {
 }
 
 async function getGamesPlayed() {
-  showCustomAlert("Fetching from the server",false);
   try {
     const url = "https://chessserver-w8ou.onrender.com/api/getGames";
     const authString = "Bearer " + (userToken ? userToken : "");
@@ -3719,7 +3733,6 @@ async function getGamesPlayed() {
         "Content-Type": "application/json"
       },
     });
-    hideCustomAlert();
     if (!response.ok)
       return null;
     const data = await response.json();
@@ -3736,9 +3749,14 @@ function analyseGame(index){
 async function makeGamesPlayed(gamesPlayed){
   if (!userToken)
     return;
+  showCustomAlert("Fetching from the server",false);
   gamesPlayed = await getGamesPlayed();
-  if (!gamesPlayed)
+  hideCustomAlert();
+  if (!gamesPlayed){
+    showCustomAlert("Failed to fetch");
     return;
+  }
+  tabClickedByUser = navArr[2];
   gamePlayedStr =
     "<div class='col p-0 mb-2 mx-1 bg-transparent '><div class='row justify-content-center'><span class='p-3 btn-green w-100 h-100'><span>Games Played</span></span></div></div>";
   gameStr = "";
