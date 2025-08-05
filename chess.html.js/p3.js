@@ -324,6 +324,7 @@ function navActions(index) {
     document.getElementById("leftbar").innerHTML = "";
     document.getElementById("rightbar").innerHTML = "";
     gameStartBool = false;
+    clearMobileTimers();
     makeTimer();
   } else if (index == 1) {
     if (time === "") {
@@ -354,10 +355,11 @@ function navActions(index) {
   } 
 }
 function navActionsAnalysis(){
+  /*
   if (time === "" || userToken) {
     document.getElementById("leftbar").innerHTML = "";
     document.getElementById("rightbar").innerHTML = "";
-  }
+  }*/
   if (userToken){
     time = "";
     timerId = null;
@@ -1029,15 +1031,19 @@ function makeRightBar() {
   const rightbar = document.getElementById("rightbar");
   rightbar.innerHTML = rightStr;
   const display = document.getElementById("display");
-  const existingTimers = document.getElementById("timersOnlyContainer");
-  if (existingTimers) existingTimers.remove();
+  //const existingTimers = document.getElementById("timersOnlyContainer");
+  //if (existingTimers) existingTimers.remove();
+  clearMobileTimers();
   console.log("tabClickedByUser:::",tabClickedByUser);
   if (isMobile) {
     if (tabClickedByUser===navArr[1]){
-      if (display && !document.getElementById("timersOnlyContainer")) {
-        console.log("Appending::: timersHTMLBlack+timersHTMLWhite");
-        timersOnlyContainer = `<div id="timersOnlyContainer">${timersHTMLBlack} ${timersHTMLWhite}</div>`;
-        display.insertAdjacentHTML("afterend", timersOnlyContainer);
+      //if (display && !document.getElementById("timersOnlyContainer")) {
+      if (display && !document.getElementById("timersOnlyContainerBlack")) {
+        //console.log("Appending::: timersHTMLBlack+timersHTMLWhite");
+        //timersOnlyContainer = `<div id="timersOnlyContainer">${timersHTMLBlack} ${timersHTMLWhite}</div>`;
+        //display.insertAdjacentHTML("afterend", timersOnlyContainer);
+        display.insertAdjacentHTML("beforebegin", `<div id="timersOnlyContainerBlackMobile">${timersHTMLBlack}</div>`);
+        display.insertAdjacentHTML("afterend", `<div id="timersOnlyContainerWhiteMobile">${timersHTMLWhite}</div>`);
       }
     }
   }
@@ -1052,6 +1058,10 @@ function makeRightBar() {
     missingPiecesUpdate();
   }
   previousRightBarMoveNum = rightPgnArr.length - 1;
+}
+function clearMobileTimers(){
+  if (document.getElementById("timersOnlyContainerBlackMobile")) document.getElementById("timersOnlyContainerBlackMobile").remove(); 
+  if (document.getElementById("timersOnlyContainerWhiteMobile")) document.getElementById("timersOnlyContainerWhiteMobile").remove(); 
 }
 function rightBarMoveNumber(moveNum) {
   let element1 = document.getElementById(
@@ -1127,7 +1137,10 @@ function convertTimeToDisplay(timeLeft){
 
 function updateTimerDisplays(){
   timerWhiteLeft = calcTimeLeft("white");
+  timerWhiteLeft = timerWhiteLeft ? timerWhiteLeft : 0;
   timerBlackLeft = calcTimeLeft("black");
+  timerBlackLeft = timerBlackLeft ? timerBlackLeft : 0;
+  console.log("timerWhiteLeft::",timerWhiteLeft);
   if (document.getElementById("timerWhite"))  {
     document.getElementById("timerWhite").innerHTML = convertTimeToDisplay(timerWhiteLeft);
     document.getElementById("timerBlack").innerHTML = convertTimeToDisplay(timerBlackLeft);
@@ -3749,6 +3762,9 @@ async function makeGamesPlayed(gamesPlayed){
     return;
   }
   tabClickedByUser = navArr[2];
+  clearMobileTimers();
+  document.getElementById("leftbar").innerHTML = "";
+  document.getElementById("rightbar").innerHTML = "";
   gamePlayedStr =
     "<div class='col p-0 mb-2 mx-1 bg-transparent '><div class='row justify-content-center'><span class='p-3 btn-green w-100 h-100'><span>Games Played</span></span></div></div>";
   gameStr = "";
