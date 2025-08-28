@@ -1034,7 +1034,7 @@ function makeRightBar() {
   //const existingTimers = document.getElementById("timersOnlyContainer");
   //if (existingTimers) existingTimers.remove();
   clearMobileTimers();
-  console.log("tabClickedByUser:::",tabClickedByUser);
+  //console.log("tabClickedByUser:::",tabClickedByUser);
   if (isMobile) {
     if (tabClickedByUser===navArr[1]){
       //if (display && !document.getElementById("timersOnlyContainer")) {
@@ -1140,7 +1140,7 @@ function updateTimerDisplays(){
   timerWhiteLeft = timerWhiteLeft ? timerWhiteLeft : 0;
   timerBlackLeft = calcTimeLeft("black");
   timerBlackLeft = timerBlackLeft ? timerBlackLeft : 0;
-  console.log("timerWhiteLeft::",timerWhiteLeft);
+  //console.log("timerWhiteLeft::",timerWhiteLeft);
   if (document.getElementById("timerWhite"))  {
     document.getElementById("timerWhite").innerHTML = convertTimeToDisplay(timerWhiteLeft);
     document.getElementById("timerBlack").innerHTML = convertTimeToDisplay(timerBlackLeft);
@@ -3011,12 +3011,19 @@ function addMove2Fen(chess, fen, move) {
 function testStockfishServer(){
   console.log("calling testStockfishServer");
   const url = "https://stockfishserver.onrender.com/test/basic";
-  fetch(url,{method: 'GET'});
+  fetch(url,{method: 'GET'})
+  .then(data => {
+    console.log("testStockfishServer:::",data);
+  })
+  .catch(error => {
+    console.error('testStockfishServer:::Fetch error:', error);
+  });
 }
 
-async function callStockAPI(fen="", depth = stockLvl,options={}) {
-  const baseServer = "https://stockfishserver.onrender.com/best-move";
-  //const baseServer = "https://stockfish.online/api/s/v2.php";
+async function callStockAPI(server,fen="", depth = stockLvl,options={}) {
+  const baseServer1 = "https://stockfishserver.onrender.com/best-move";
+  const baseServer2 = "https://stockfish.online/api/s/v2.php";
+  const baseServer = server===1 ? baseServer1 : baseServer2;
   //https://stockfishserver.onrender.com/best-move?fen=rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR%20w%20KQkq%20-%200%201&depth=5
   const url = `${baseServer}?fen=${encodeURIComponent(
     fen
@@ -3027,9 +3034,10 @@ async function callStockAPI(fen="", depth = stockLvl,options={}) {
       signal: options.signal, 
     });
     const data = await response.json();
+    console.log(baseServer+"::"+data);
     return data;
   } catch (error) {
-    console.error("Error fetching Stockfish API:", error);
+    console.error("Error fetching Stockfish API:", error,"::",baseServer);
     throw error;
     //return null;
   }
@@ -3048,9 +3056,63 @@ async function getBestMoveOld(fen) {
   }
 }
 
+async function firstSuccessfulWithAbort(promiseGenerators) {
+  return new Promise((resolve, reject) => {
+    let rejections = 0;
+    const total = promiseGenerators.length;
+    const controllers = [];
+    for (const gen of promiseGenerators) {
+      const controller = new AbortController();
+      controllers.push(controller);
+      const promise = gen(controller.signal);
+      promise.then(result => {
+        controllers.forEach(ctrl => ctrl.abort());
+        resolve(result);
+      }).catch(err => {
+        rejections++;
+        if (rejections === total) {
+          reject(new Error("All API calls failed"));
+        }
+      });
+    }
+  });
+}
+
+async function getBestMoveFromBothWithAbort(fen) {
+  return firstSuccessfulWithAbort([
+    (signal) => callStockAPI(2,fen),                                 
+    (signal) => getBestMoveWithRetry(fen) 
+  ]);
+}
+
+async function firstSuccessful(promiseGenerators) {
+  return new Promise((resolve, reject) => {
+    let rejections = 0;
+    const total = promiseGenerators.length;
+    for (const gen of promiseGenerators) {
+      const promise = gen();
+      promise.then(resolve).catch(() => {
+        rejections++;
+        if (rejections === total) {
+          reject(new Error("All API calls failed"));
+        }
+      });
+    }
+  });
+}
+
+async function getBestMoveFromBoth(fen) {
+  return firstSuccessful([
+    () => callStockAPI(2,fen),                                 
+    () => getBestMoveWithRetry(fen) 
+  ]);
+}
+
 async function getBestMove(fen) {
+  console.log("Fetching computer's move from both");
   showCustomAlert("Fetching computer's move",false);
-  const data = await getBestMoveWithRetry(fen);
+  const data = await getBestMoveFromBoth(fen);
+  //const data = await getBestMoveWithRetry(fen);
   if (data && data.success) {
     hideCustomAlert();
     let bestmove = data.bestmove;
@@ -3069,7 +3131,7 @@ async function getBestMoveWithRetry(fen, timeout = 10000, maxRetries = 8, retryD
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
     try {
-      const result = await callStockAPI(fen, stockLvl,{ signal: controller.signal });
+      const result = await callStockAPI(1,fen, stockLvl,{ signal: controller.signal });
       clearTimeout(timeoutId);
       if (result)
         return result; 
